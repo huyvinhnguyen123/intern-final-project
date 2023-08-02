@@ -1,0 +1,16 @@
+Báo cáo cuối ngày 02/08/2023
+1. Báo cáo công việc ngày 02/08/2023 :
+- Tìm hiểu task 1,2
+	- Task 1: Cài đặt redis local vào window (Hoàn thành)
+	- Task 2: Sửa source code để lưu JWT token vào redis local (Đang triển khai)
+- Coding task 2
+2. Dự kiến công việc cuối ngày 02/08/2023 :
+- Coding task 2
+3. Vấn đề gặp phải: 
+- Sau khi thêm redis và config redis vào src final project thì code đã chạy được bình thường nhưng khi kiểm tra token trong redis thì redis trả về nil
+- Solution: kiểm tra sau khi generate ra token có được store trong redis hay không?
+
+Nguồn download redis: https://github.com/microsoftarchive/redis/releases
+Nguồn tham khảo redis: https://redis.io/docs/ui/cli/, https://viblo.asia/p/tim-hieu-chung-ve-redis-maGK7VMx5j2
+Nguồn tham khảo code springboot + redis: https://viblo.asia/p/huong-dan-spring-boot-redis-aWj53NPGl6m
+
