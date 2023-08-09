@@ -21,7 +21,7 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long productId;
 
-    @Column(name = "sku")
+    @Column(name = "sku", unique = true)
     private String sku;
 
     @Column(name = "product_name")

@@ -34,7 +34,7 @@ public interface ProductRepository extends CrudRepository<Product, Long>, ListCr
             "FROM product p\n" +
             "LEFT JOIN product_image pro_img ON pro_img.product_id = p.product_id\n" +
             "LEFT JOIN image_for_product ifp ON ifp.image_id = pro_img.image_id\n" +
-            "WHERE p.sku LIKE %:sku% OR p.sku IS NULL",
+            "WHERE p.sku LIKE %:sku%",
             nativeQuery = true)
     List<Product> searchProducts(@Param("sku") String sku);
 }

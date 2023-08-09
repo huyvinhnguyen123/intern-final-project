@@ -77,11 +77,9 @@ public class GoogleDriveService {
      * @throws IOException - error
      * @throws GeneralSecurityException -error
      */
-    public File uploadToDrive(MultipartFile imageFile) throws IOException, GeneralSecurityException {
+    public File uploadToDrive(MultipartFile imageFile, String folderId) throws IOException, GeneralSecurityException {
         Drive driveService = getDriveService();
 
-        // folder id
-        final String folderId = "12e57klbf_SHpWKSya0ioLdDnY42fHyr3";
         // name of file
         String fileName = imageFile.getOriginalFilename();
         // extension of file
@@ -93,10 +91,6 @@ public class GoogleDriveService {
         fileMetadata.setParents(Collections.singletonList(folderId));
 
         InputStreamContent mediaContent = new InputStreamContent(mimeType, imageFile.getInputStream());
-
-//        File uploadedFile = driveService.files().create(fileMetadata, mediaContent)
-//                .setFields("id, webContentLink")
-//                .execute();
 
         Drive.Files.Create createRequest = driveService.files().create(fileMetadata, mediaContent)
                 .setFields("id, webContentLink");
@@ -114,8 +108,8 @@ public class GoogleDriveService {
      * @throws IOException - error
      * @throws GeneralSecurityException - error
      */
-    public String uploadImageAndGetId(MultipartFile imageFile) throws IOException, GeneralSecurityException {
-        return uploadToDrive(imageFile).getId();
+    public String uploadImageAndGetId(MultipartFile imageFile, String folderId) throws IOException, GeneralSecurityException {
+        return uploadToDrive(imageFile, folderId).getId();
     }
 
     /**

@@ -1,7 +1,6 @@
 package com.beetech.finalproject.web.controller;
 
 import com.beetech.finalproject.common.AuthException;
-import com.beetech.finalproject.common.ValidationException;
 import com.beetech.finalproject.domain.service.CategoryService;
 import com.beetech.finalproject.domain.service.GoogleDriveService;
 import com.beetech.finalproject.web.common.ResponseDto;
@@ -9,9 +8,7 @@ import com.beetech.finalproject.web.dtos.category.CategoryCreateDto;
 import com.beetech.finalproject.web.dtos.category.CategoryRetrieveDto;
 import com.beetech.finalproject.web.dtos.category.CategoryUpdateDto;
 import com.beetech.finalproject.web.response.CategoryResponse;
-import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -20,7 +17,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -95,6 +91,7 @@ public class CategoryController {
     }
 
     @DeleteMapping("/delete-category")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResponseDto<Object>> deleteCategory(@RequestParam Long categoryId) {
 
         log.info("request deleting category");
@@ -108,13 +105,13 @@ public class CategoryController {
         }
     }
 
-    @GetMapping("/download-image")
+    @GetMapping("/category/download-image")
     public ResponseEntity<byte[]> downloadCategoryImage(@RequestParam Long categoryId) {
 
         log.info("request downloading category");
 
         try {
-            String fileId = categoryService.downloadCategoryImage(categoryId);
+            String fileId = categoryService.getCategoryImage(categoryId);
 
             File fileMetadata = googleDriveService.downloadFromDrive(fileId);
             String fileName = fileMetadata.getName();

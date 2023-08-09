@@ -33,7 +33,7 @@ public class CategoryService {
     private final ProductRepository productRepository;
     private final GoogleDriveService googleDriveService;
 
-    @Value("${spring.folder.category}")
+    @Value("${drive.folder.category}")
     private String categoryPath;
 
     /**
@@ -50,7 +50,7 @@ public class CategoryService {
         log.info("Save new category success!");
 
         ImageForCategory imageForCategory = new ImageForCategory();
-        imageForCategory.setPath(googleDriveService.uploadImageAndGetId(categoryCreateDto.getImage()));
+        imageForCategory.setPath(googleDriveService.uploadImageAndGetId(categoryCreateDto.getImage(), categoryPath));
         imageForCategory.setName(categoryCreateDto.getImage().getOriginalFilename());
         imageForCategoryRepository.save(imageForCategory);
         log.info("Save new image for category success!");
@@ -148,7 +148,7 @@ public class CategoryService {
             }
 
             ImageForCategory imageForCategory = new ImageForCategory();
-            imageForCategory.setPath(googleDriveService.uploadImageAndGetId(categoryUpdateDto.getImage()));
+            imageForCategory.setPath(googleDriveService.uploadImageAndGetId(categoryUpdateDto.getImage(), categoryPath));
             imageForCategory.setName(categoryUpdateDto.getImage().getOriginalFilename());
             imageForCategoryRepository.save(imageForCategory);
             log.info("Save new image for category success!");
@@ -204,13 +204,13 @@ public class CategoryService {
     }
 
     /**
-     * download category's image
+     * Get category's image
      *
      * @param categoryId - input categoryId
      * @throws GeneralSecurityException - error
      * @throws IOException - error
      */
-    public String downloadCategoryImage(Long categoryId) throws GeneralSecurityException, IOException {
+    public String getCategoryImage(Long categoryId) throws GeneralSecurityException, IOException {
         String fileId = "";
         Category existingCategory = categoryRepository.findById(categoryId).orElseThrow(
                 () -> {
@@ -223,7 +223,7 @@ public class CategoryService {
         for(CategoryImage categoryImage: categoryImageRepository.findAll()) {
             if(categoryImage.getCategory().equals(existingCategory)) {
                 fileId = categoryImage.getImageForCategory().getPath();
-                log.info("Download file success");
+                log.info("Get file success");
             }
         }
         return fileId;

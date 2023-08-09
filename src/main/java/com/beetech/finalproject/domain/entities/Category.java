@@ -21,6 +21,6 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long categoryId;
 
-    @Column(name = "category_name", nullable = false)
+    @Column(name = "category_name", unique = true)
     private String categoryName;
 }

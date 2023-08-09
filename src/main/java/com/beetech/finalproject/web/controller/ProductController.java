@@ -1,16 +1,20 @@
 package com.beetech.finalproject.web.controller;
 
 import com.beetech.finalproject.common.AuthException;
+import com.beetech.finalproject.domain.service.GoogleDriveService;
 import com.beetech.finalproject.domain.service.ProductService;
 import com.beetech.finalproject.web.common.ResponseDto;
 import com.beetech.finalproject.web.dtos.product.*;
 import com.beetech.finalproject.web.response.ProductDetailResponse;
 import com.beetech.finalproject.web.response.ProductResponse;
+import com.google.api.services.drive.model.File;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,6 +32,7 @@ import java.util.List;
 @RequestMapping("api/v1")
 public class ProductController {
     private final ProductService productService;
+    private final GoogleDriveService googleDriveService;
 
     @PostMapping(value = "/create-product",
             consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
@@ -121,6 +126,62 @@ public class ProductController {
             return ResponseEntity.ok(ResponseDto.build().withMessage("OK"));
         } catch (AuthenticationException | GeneralSecurityException | IOException e) {
             log.error("Delete product failed: ", e);
+            throw new AuthException(AuthException.ErrorStatus.INVALID_GRANT);
+        }
+    }
+
+    @GetMapping("/product/download-image")
+    public ResponseEntity<byte[]> downloadProductImage(@RequestParam Long productId) {
+
+        log.info("request downloading category");
+
+        try {
+            String fileId = productService.getProductImage(productId);
+
+            File fileMetadata = googleDriveService.downloadFromDrive(fileId);
+            String fileName = fileMetadata.getName();
+            String mimeType = fileMetadata.getMimeType();
+
+            // Fetch the file content as a byte array
+            byte[] fileContent = googleDriveService.downloadFileContent(fileId);
+
+            // Create response headers with the correct MIME type and content disposition
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType(mimeType));
+            headers.setContentDispositionFormData(fileName, fileName);
+
+            // Return the file content as a ResponseEntity with the appropriate headers
+            return new ResponseEntity<>(fileContent, headers, HttpStatus.OK);
+        } catch (AuthenticationException | GeneralSecurityException | IOException e) {
+            log.error("Download product failed: ", e);
+            throw new AuthException(AuthException.ErrorStatus.INVALID_GRANT);
+        }
+    }
+
+    @GetMapping("/product/detail-images/download-image")
+    public ResponseEntity<byte[]> downloadProductDetailImage(@RequestParam Long productId, @RequestParam String path) {
+
+        log.info("request downloading category");
+
+        try {
+            String fileId = productService.getProductDetailImage(productId, path);
+
+            File fileMetadata = googleDriveService.downloadFromDrive(fileId);
+            String fileName = fileMetadata.getName();
+            String mimeType = fileMetadata.getMimeType();
+
+            // Fetch the file content as a byte array
+            byte[] fileContent = googleDriveService.downloadFileContent(fileId);
+
+            // Create response headers with the correct MIME type and content disposition
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType(mimeType));
+            headers.setContentDispositionFormData(fileName, fileName);
+
+            // Return the file content as a ResponseEntity with the appropriate headers
+            return new ResponseEntity<>(fileContent, headers, HttpStatus.OK);
+        } catch (AuthenticationException | GeneralSecurityException | IOException e) {
+            log.error("Download product detail images failed: ", e);
             throw new AuthException(AuthException.ErrorStatus.INVALID_GRANT);
         }
     }
