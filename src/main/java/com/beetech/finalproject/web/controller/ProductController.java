@@ -1,6 +1,7 @@
 package com.beetech.finalproject.web.controller;
 
 import com.beetech.finalproject.common.AuthException;
+import com.beetech.finalproject.domain.entities.User;
 import com.beetech.finalproject.domain.service.GoogleDriveService;
 import com.beetech.finalproject.domain.service.ProductService;
 import com.beetech.finalproject.web.common.ResponseDto;
@@ -18,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
@@ -126,6 +128,21 @@ public class ProductController {
             return ResponseEntity.ok(ResponseDto.build().withMessage("OK"));
         } catch (AuthenticationException | GeneralSecurityException | IOException e) {
             log.error("Delete product failed: ", e);
+            throw new AuthException(AuthException.ErrorStatus.INVALID_GRANT);
+        }
+    }
+
+    @GetMapping("/like-product")
+    public ResponseEntity<ResponseDto<Object>> likeProduct(@RequestParam Long productId,
+                                                           Authentication authentication) {
+        log.info("request liking product");
+
+        try {
+            User currentUser = (User) authentication.getPrincipal();
+            productService.likeProduct(productId,currentUser);
+            return ResponseEntity.ok(ResponseDto.build().withMessage("OK"));
+        } catch (AuthenticationException e) {
+            log.error("Like product failed: " + e.getMessage());
             throw new AuthException(AuthException.ErrorStatus.INVALID_GRANT);
         }
     }

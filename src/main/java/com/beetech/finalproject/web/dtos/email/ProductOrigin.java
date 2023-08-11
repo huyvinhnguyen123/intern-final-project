@@ -1,4 +1,4 @@
-package com.beetech.finalproject.web.dtos.product;
+package com.beetech.finalproject.web.dtos.email;
 
 import com.beetech.finalproject.web.dtos.image.ImageRetrieveDto;
 import lombok.Data;
@@ -6,11 +6,12 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class ProductRetrieveSearchDetailDto {
-    private Long productId;
+public class ProductOrigin {
     private String sku;
     private String productName;
     private String detailInfo;
     private Double price;
-    private List<ImageRetrieveDto> images;
+    private String categoryName;
+    private String thumbnailImage;
+    private List<String> detailImages;
 }

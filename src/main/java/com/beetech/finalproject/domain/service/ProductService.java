@@ -3,6 +3,10 @@ package com.beetech.finalproject.domain.service;
 import com.beetech.finalproject.common.DeleteFlag;
 import com.beetech.finalproject.domain.entities.*;
 import com.beetech.finalproject.domain.repository.*;
+import com.beetech.finalproject.utils.mail.CustomMailGenerator;
+import com.beetech.finalproject.web.dtos.email.EmailDetails;
+import com.beetech.finalproject.web.dtos.email.ProductOrigin;
+import com.beetech.finalproject.web.dtos.image.ImageRetrieveDto;
 import com.beetech.finalproject.web.dtos.page.PageEntities;
 import com.beetech.finalproject.web.dtos.product.*;
 import lombok.RequiredArgsConstructor;
@@ -29,11 +33,25 @@ public class ProductService {
     private final ProductImageRepository productImageRepository;
     private final DetailImageRepository detailImageRepository;
     private final GoogleDriveService googleDriveService;
+    private final EmailDetailsService emailDetailService;
 
     @Value("${drive.folder.product}")
     private String productPath;
     @Value("${drive.folder.detail-images}")
     private String detailImagesPath;
+
+    /**
+     * send mail to user
+     *
+     * @param emails - input list emails
+     */
+    public void SendProductUpdateMail(String[] emails, ProductOrigin productOrigin, ProductOrigin productAfterUpdate) {
+        EmailDetails emailDetails = new EmailDetails();
+        emailDetails.setRecipients(emails);
+        emailDetails.setSubject("You have 1 notification about product's information");
+        emailDetails.setMsgBody(CustomMailGenerator.productWhistListMessage(productOrigin, productAfterUpdate));
+        emailDetailService.sendMultipleMailWithFormHTML(emailDetails);
+    }
 
     /**
      * create product
@@ -217,6 +235,45 @@ public class ProductService {
         return productRetrieveSearchDetailDtos;
     }
 
+
+    /**
+     * Get origin product
+     *
+     * @param existingProduct - input existing product
+     * @return - product origin
+     */
+    private ProductOrigin getOriginProduct(Product existingProduct) {
+        ProductOrigin productOrigin = new ProductOrigin();
+        productOrigin.setSku(existingProduct.getSku());
+        productOrigin.setProductName(existingProduct.getProductName());
+        productOrigin.setDetailInfo(existingProduct.getDetailInfo());
+        productOrigin.setPrice(existingProduct.getPrice());
+        for(Category category: existingProduct.getCategories()) {
+            productOrigin.setCategoryName(category.getCategoryName());
+        }
+
+        List<ImageForProduct> imageForProducts = new ArrayList<>();
+        for(ProductImage productImage: productImageRepository.findAll()) {
+            if(productImage.getProduct().equals(existingProduct)) {
+                imageForProducts.add(productImage.getImageForProduct());
+                productOrigin.setThumbnailImage(productImage.getImageForProduct().getPath());
+            }
+        }
+
+        List<String> detailImages = new ArrayList<>();
+        for(ImageForProduct ifp: imageForProducts) {
+            for(DetailImage detailImage: detailImageRepository.findAll()) {
+                if(detailImage.getImageForProduct().equals(ifp)) {
+                    detailImages.add(detailImage.getPath());
+                }
+            }
+        }
+        productOrigin.setDetailImages(detailImages);
+
+        log.info("Get origin product success");
+        return productOrigin;
+    }
+
     /**
      * update product
      *
@@ -225,7 +282,7 @@ public class ProductService {
      * @return - product after update
      */
     @Transactional
-    public Product updateProduct(Long productId, ProductCreateDto productCreateDto) throws GeneralSecurityException, IOException {
+    public void updateProduct(Long productId, ProductCreateDto productCreateDto) throws GeneralSecurityException, IOException {
         Product existingProduct = productRepository.findById(productId).orElseThrow(
                 ()->{
                     log.error("Not found this product");
@@ -233,6 +290,9 @@ public class ProductService {
                 }
         );
         log.info("Found product");
+
+        // Get origin product
+        ProductOrigin productOrigin = getOriginProduct(existingProduct);
 
         existingProduct.setSku(productCreateDto.getSku());
         existingProduct.setProductName(productCreateDto.getProductName());
@@ -308,7 +368,18 @@ public class ProductService {
             }
         }
         log.info("Update product success");
-        return existingProduct;
+
+        ProductOrigin productAfterUpdate = getOriginProduct(existingProduct);
+
+        List<String> emails = new ArrayList<>();
+        for(User user: existingProduct.getUsers()) {
+            emails.add(user.getLoginId());
+        }
+
+        String[] emailArray = emails.toArray(new String[0]);
+        SendProductUpdateMail(emailArray, productOrigin, productAfterUpdate);
+
+        log.info("Update product & send mail for updating product success");
     }
 
     /**
@@ -371,5 +442,30 @@ public class ProductService {
             }
         }
         return fileId;
+    }
+
+    /**
+     * like product by user
+     *
+     * @param productId - input productId
+     * @param user - input current user
+     */
+    public void likeProduct(Long productId, User user) {
+        Product existingProduct = productRepository.findById(productId).orElseThrow(
+                () -> {
+                    log.error("Not found this product");
+                    return new NullPointerException("Not found this product: " + productId);
+                }
+        );
+        log.info("Found this product");
+
+        existingProduct.setIsLike(true);
+
+        List<User> users = existingProduct.getUsers();
+        users.add(user);
+        existingProduct.setUsers(users);
+
+        productRepository.save(existingProduct);
+        log.info("Update product with user success");
     }
 }
