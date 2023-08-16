@@ -29,11 +29,10 @@ public class UserService {
      * Check valid new user information, if ok register to system
      *
      * @param userCreateDto new user information
-     * @return registered data
      */
-    public User registerNewUser(UserCreateDto userCreateDto) {
+    public void registerNewUser(UserCreateDto userCreateDto) {
         validUserId(userCreateDto.getLoginId());
-        return createUser(userCreateDto);
+        createUser(userCreateDto);
     }
 
     /**
@@ -88,33 +87,30 @@ public class UserService {
      * change password
      *
      * @param userChangePasswordDto - input password
-     * @param user - authentication
-     * @return - user
+     * @param user                  - authentication
      */
-    public User changePassword(UserChangePasswordDto userChangePasswordDto, User user) {
-        User existingUser = user;
+    public void changePassword(UserChangePasswordDto userChangePasswordDto, User user) {
         String oldPassword = userChangePasswordDto.getOldPassword();
 
         // Use BCrypt's built-in method to verify the old password
-        if (BCrypt.checkpw(oldPassword, existingUser.getPassword())) {
+        if (BCrypt.checkpw(oldPassword, user.getPassword())) {
             String newPassword = userChangePasswordDto.getPassword();
             String encodedNewPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
-            existingUser.setPassword(encodedNewPassword);
-            userRepository.save(existingUser);
+            user.setPassword(encodedNewPassword);
+            userRepository.save(user);
             log.info("Change password success");
         } else {
             log.error("Old password is not correct");
             throw new RuntimeException("Old password is not correct");
         }
-        return existingUser;
     }
 
     /**
      * search user and pagination with condition success
      *
-     * @param userSearchDto
-     * @param pageable
-     * @return
+     * @param userSearchDto - input
+     * @param pageable - input
+     * @return - list users
      */
     public Page<UserRetrieveDto> searchUserAndPagination(UserSearchDto userSearchDto, Pageable pageable) {
         Page<User> users = userRepository.searchListOfUserWithCondition(userSearchDto.getStartDate(),

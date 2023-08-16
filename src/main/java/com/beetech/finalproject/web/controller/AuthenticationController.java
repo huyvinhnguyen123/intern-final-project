@@ -1,8 +1,8 @@
 package com.beetech.finalproject.web.controller;
 
+import com.beetech.finalproject.common.AccountException;
 import com.beetech.finalproject.common.AuthException;
 import com.beetech.finalproject.common.DeleteFlag;
-import com.beetech.finalproject.common.ValidationException;
 import com.beetech.finalproject.domain.entities.User;
 import com.beetech.finalproject.domain.service.UserService;
 import com.beetech.finalproject.web.common.ResponseDto;
@@ -13,13 +13,14 @@ import com.beetech.finalproject.web.security.JwtUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,21 +39,8 @@ public class AuthenticationController {
     private final JwtUtils JwtUtils;
     private final UserService userService;
 
-    /**
-     * Validate field
-     *
-     * @param bindingResult - when user input wrong condition
-     * @param fieldErrors - input field error
-     * @return - list validate field error
-     */
-    public Map<String, String> validateFields(BindingResult bindingResult, Map<String, String> fieldErrors) {
-        for(FieldError fieldError: bindingResult.getFieldErrors()) {
-            String fieldName = fieldError.getField();
-            String errorMessage = fieldError.getDefaultMessage();
-            fieldErrors.put(fieldName, errorMessage);
-        }
-        throw new ValidationException(fieldErrors);
-    }
+    @Value("${ValidInput}")
+    private String validInput;
 
     /**
      * request create user
@@ -68,11 +56,19 @@ public class AuthenticationController {
         // Check for validation errors in the input
         if (bindingResult.hasErrors()) {
             Map<String, String> fieldErrors = new HashMap<>();
-            validateFields(bindingResult, fieldErrors);
+            return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST, validInput, fieldErrors, bindingResult);
         }
 
         userService.registerNewUser(userCreateDto);
         return ResponseEntity.ok(ResponseDto.build().withMessage("OK"));
+
+//        try {
+//            userService.registerNewUser(userCreateDto);
+//            return ResponseEntity.ok(ResponseDto.build().withMessage("OK"));
+//        } catch(AccountException e) {
+//            log.error("Create user failed: " + e.getMessage());
+//            return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST,"Failed to create user: " + e.getMessage());
+//        }
     }
 
     /**
@@ -89,7 +85,7 @@ public class AuthenticationController {
         // Check for validation errors in the input
         if (bindingResult.hasErrors()) {
             Map<String, String> fieldErrors = new HashMap<>();
-            validateFields(bindingResult, fieldErrors);
+            return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST, validInput, fieldErrors, bindingResult);
         }
 
         try {
@@ -121,7 +117,7 @@ public class AuthenticationController {
             return ResponseEntity.ok(ResponseDto.build().withData(loginResponse));
         } catch (AuthenticationException e) {
             log.error("authentication failed: " + e.getMessage());
-            throw new AuthException(AuthException.ErrorStatus.INVALID_GRANT);
+            return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST, "Failed to login: email or password not right");
         }
     }
 }

@@ -50,7 +50,7 @@ public class GoogleDriveService {
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(httpTransport, JSON_FACTORY, clientSecrets, Collections.singletonList(DriveScopes.DRIVE))
                 .setDataStoreFactory(new FileDataStoreFactory(TOKENS_DIRECTORY_PATH))
                 .build();
-        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(2222).build();
+        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setHost("localhost").setPort(2223).build();
         Credential credential = new AuthorizationCodeInstalledApp(flow, receiver).authorize("atifarlunar.official@gmail.com");
 
         return new Drive.Builder(httpTransport, JSON_FACTORY, credential)
@@ -122,8 +122,7 @@ public class GoogleDriveService {
      */
     public File downloadFromDrive(String fileId) throws IOException, GeneralSecurityException {
         Drive driveService = getDriveService();
-        File fileMetadata = driveService.files().get(fileId).execute();
-        return fileMetadata;
+        return driveService.files().get(fileId).execute();
     }
 
     /**
