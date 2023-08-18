@@ -70,17 +70,4 @@ public class UserController {
             throw new AuthException(AuthException.ErrorStatus.INVALID_GRANT);
         }
     }
-
-//    @PostMapping("/users/send-mail")
-//    public ResponseEntity<ResponseDto<Object>> sendEmail(@RequestBody String email) {
-//        log.info("request sending mail");
-//
-//        try {
-//            userService.SendMail(email);
-//            return ResponseEntity.ok(ResponseDto.build().withMessage("OK"));
-//        } catch (AuthenticationException e) {
-//            log.error("Send mail failed: " + e.getMessage());
-//            throw new AuthException(AuthException.ErrorStatus.INVALID_GRANT);
-//        }
-//    }
 }

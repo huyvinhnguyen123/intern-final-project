@@ -26,8 +26,8 @@ public interface ProductRepository extends CrudRepository<Product, Long>, ListCr
             "GROUP BY p.product_id",
             nativeQuery = true)
     Page<Product> searchProductsAndPagination(@Param("categoryId") Long categoryId, @Param("sku") String sku,
-                                               @Param("productName") String productName,
-                                               Pageable pageable);
+                                              @Param("productName") String productName,
+                                              Pageable pageable);
 
     @Query(value="SELECT p.product_id, p.sku, p.old_sku, p.product_name, p.detail_info, p.price, p.delete_flag, p.is_like,\n" +
             "ifp.name, ifp.path\n" +

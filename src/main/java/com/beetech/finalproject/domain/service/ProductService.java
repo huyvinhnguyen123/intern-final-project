@@ -3,6 +3,8 @@ package com.beetech.finalproject.domain.service;
 import com.beetech.finalproject.common.DeleteFlag;
 import com.beetech.finalproject.domain.entities.*;
 import com.beetech.finalproject.domain.repository.*;
+import com.beetech.finalproject.domain.service.other.EmailDetailsService;
+import com.beetech.finalproject.domain.service.other.GoogleDriveService;
 import com.beetech.finalproject.utils.mail.CustomMailGenerator;
 import com.beetech.finalproject.web.dtos.email.EmailDetails;
 import com.beetech.finalproject.web.dtos.email.ProductOrigin;
@@ -45,7 +47,7 @@ public class ProductService {
      *
      * @param emails - input list emails
      */
-    public void SendProductUpdateMail(String[] emails, ProductOrigin productOrigin, ProductOrigin productAfterUpdate) {
+    public void sendProductUpdateMail(String[] emails, ProductOrigin productOrigin, ProductOrigin productAfterUpdate) {
         EmailDetails emailDetails = new EmailDetails();
         emailDetails.setRecipients(emails);
         emailDetails.setSubject("You have 1 notification about product's information");
@@ -57,9 +59,8 @@ public class ProductService {
      * create product
      *
      * @param productCreateDto - input productCreateDto's properties
-     * @return - product
      */
-    public Product createProduct(ProductCreateDto productCreateDto) throws GeneralSecurityException, IOException {
+    public void createProduct(ProductCreateDto productCreateDto) throws GeneralSecurityException, IOException {
         Product product = new Product();
         product.setSku(productCreateDto.getSku());
         product.setProductName(productCreateDto.getProductName());
@@ -104,7 +105,6 @@ public class ProductService {
         }
 
         log.info("Create product success");
-        return product;
     }
 
     /**
@@ -115,7 +115,7 @@ public class ProductService {
      * @return - list products with pagination
      */
     public Page<ProductRetrieveDto> searchProductsAndPagination(ProductSearchInputDto productSearchInputDto,
-                                                                 Pageable pageable) {
+                                                                Pageable pageable) {
 
         Page<Product> products = productRepository.searchProductsAndPagination(productSearchInputDto.getCategoryId(),
                 productSearchInputDto.getSku(), productSearchInputDto.getProductName(),
@@ -279,7 +279,6 @@ public class ProductService {
      *
      * @param productId - input productId
      * @param productCreateDto - input productCreateDto's properties
-     * @return - product after update
      */
     @Transactional
     public void updateProduct(Long productId, ProductCreateDto productCreateDto) throws GeneralSecurityException, IOException {
@@ -377,7 +376,7 @@ public class ProductService {
         }
 
         String[] emailArray = emails.toArray(new String[0]);
-        SendProductUpdateMail(emailArray, productOrigin, productAfterUpdate);
+        sendProductUpdateMail(emailArray, productOrigin, productAfterUpdate);
 
         log.info("Update product & send mail for updating product success");
     }

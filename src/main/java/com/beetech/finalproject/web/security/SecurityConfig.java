@@ -58,6 +58,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/delete-product").hasRole("ADMIN")
                         .requestMatchers("/api/v1/update-product").hasRole("ADMIN")
                         .requestMatchers("/api/v1/create-order").hasRole("USER")
+                        .requestMatchers("/api/v1/import").hasRole("ADMIN")
                 )
                 // For all others url need to be authenticated
                 .authorizeHttpRequests((requests) -> requests.anyRequest().authenticated())

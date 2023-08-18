@@ -2,8 +2,9 @@ package com.beetech.finalproject.web.controller;
 
 import com.beetech.finalproject.common.AuthException;
 import com.beetech.finalproject.domain.entities.User;
-import com.beetech.finalproject.domain.service.GoogleDriveService;
 import com.beetech.finalproject.domain.service.ProductService;
+import com.beetech.finalproject.domain.service.other.CSVParserService;
+import com.beetech.finalproject.domain.service.other.GoogleDriveService;
 import com.beetech.finalproject.web.common.ResponseDto;
 import com.beetech.finalproject.web.dtos.product.*;
 import com.beetech.finalproject.web.response.ProductDetailResponse;
@@ -22,6 +23,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -35,13 +37,27 @@ import java.util.List;
 public class ProductController {
     private final ProductService productService;
     private final GoogleDriveService googleDriveService;
+    private final CSVParserService csvParserService;
+
+    @PostMapping("/import")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ResponseDto<Object>> importData(@RequestParam("file") MultipartFile file) {
+        log.info("request importing products");
+
+        try {
+            csvParserService.parseProduct(file.getInputStream());
+            return ResponseEntity.ok(ResponseDto.build().withMessage("OK"));
+        } catch (IOException e) {
+            return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST,"Failed to import products: " + e.getMessage());
+        }
+    }
 
     @PostMapping(value = "/create-product",
             consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
             produces = {MediaType.APPLICATION_JSON_VALUE})
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResponseDto<Object>> createProduct(@RequestBody @ModelAttribute
-                                                              ProductCreateDto productCreateDto) {
+                                                             ProductCreateDto productCreateDto) {
         log.info("request creating product");
 
         try {
@@ -49,7 +65,7 @@ public class ProductController {
             return ResponseEntity.ok(ResponseDto.build().withMessage("OK"));
         } catch (AuthenticationException | GeneralSecurityException | IOException e) {
             log.error("Create product failed: ", e);
-            throw new AuthException(AuthException.ErrorStatus.INVALID_GRANT);
+            return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST,"Failed to create product: " + e.getMessage());
         }
     }
 
@@ -58,7 +74,7 @@ public class ProductController {
             produces = {MediaType.APPLICATION_JSON_VALUE})
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResponseDto<Object>> updateProduct(@RequestParam Long productId, @RequestBody @ModelAttribute
-                                                             ProductCreateDto productCreateDto) {
+    ProductCreateDto productCreateDto) {
         log.info("request updating product");
 
         try {
@@ -66,15 +82,15 @@ public class ProductController {
             return ResponseEntity.ok(ResponseDto.build().withMessage("OK"));
         } catch (AuthenticationException | GeneralSecurityException | IOException e) {
             log.error("Update product failed: ", e);
-            throw new AuthException(AuthException.ErrorStatus.INVALID_GRANT);
+            return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST,"Failed to update product: " + e.getMessage());
         }
     }
 
     @GetMapping("/products")
     public ResponseEntity<ResponseDto<Object>> searchProductsAndPagination(@RequestParam(defaultValue = "0") int page,
-                                                                            @RequestParam(defaultValue = "10") int size,
-                                                                            @RequestBody @ModelAttribute
-                                                                                ProductSearchInputDto productSearchInputDto) {
+                                                                           @RequestParam(defaultValue = "10") int size,
+                                                                           @RequestBody @ModelAttribute
+                                                                           ProductSearchInputDto productSearchInputDto) {
 
         Pageable pageable = PageRequest.of(page, size);
         log.info("request searching products");
@@ -93,7 +109,7 @@ public class ProductController {
             return ResponseEntity.ok(ResponseDto.build().withData(productResponses));
         } catch (AuthenticationException e) {
             log.error("Search products failed: " + e.getMessage());
-            throw new AuthException(AuthException.ErrorStatus.INVALID_GRANT);
+            return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST,"Failed to search product: " + e.getMessage());
         }
     }
 
@@ -115,7 +131,7 @@ public class ProductController {
             return ResponseEntity.ok(ResponseDto.build().withData(productResponses));
         } catch (AuthenticationException e) {
             log.error("Search products failed: " + e.getMessage());
-            throw new AuthException(AuthException.ErrorStatus.INVALID_GRANT);
+            return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST,"Failed to search product: " + e.getMessage());
         }
     }
 
@@ -128,7 +144,7 @@ public class ProductController {
             return ResponseEntity.ok(ResponseDto.build().withMessage("OK"));
         } catch (AuthenticationException | GeneralSecurityException | IOException e) {
             log.error("Delete product failed: ", e);
-            throw new AuthException(AuthException.ErrorStatus.INVALID_GRANT);
+            return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST,"Failed to delete product: " + e.getMessage());
         }
     }
 
@@ -143,7 +159,7 @@ public class ProductController {
             return ResponseEntity.ok(ResponseDto.build().withMessage("OK"));
         } catch (AuthenticationException e) {
             log.error("Like product failed: " + e.getMessage());
-            throw new AuthException(AuthException.ErrorStatus.INVALID_GRANT);
+            return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST,"Failed to like product: " + e.getMessage());
         }
     }
 
