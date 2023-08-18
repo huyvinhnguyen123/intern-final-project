@@ -8,6 +8,7 @@ import com.beetech.finalproject.domain.repository.CategoryImageRepository;
 import com.beetech.finalproject.domain.repository.CategoryRepository;
 import com.beetech.finalproject.domain.repository.ImageForCategoryRepository;
 import com.beetech.finalproject.domain.repository.ProductRepository;
+import com.beetech.finalproject.domain.service.other.GoogleDriveService;
 import com.beetech.finalproject.web.dtos.category.CategoryCreateDto;
 import com.beetech.finalproject.web.dtos.category.CategoryRetrieveDto;
 import com.beetech.finalproject.web.dtos.category.CategoryUpdateDto;
@@ -40,10 +41,9 @@ public class CategoryService {
      * create new category
      *
      * @param categoryCreateDto - input categoryCreateDto's properties
-     * @return - category
      */
     @Transactional
-    public Category createCategory(CategoryCreateDto categoryCreateDto) throws GeneralSecurityException, IOException {
+    public void createCategory(CategoryCreateDto categoryCreateDto) throws GeneralSecurityException, IOException {
         Category category = new Category();
         category.setCategoryName(categoryCreateDto.getCategoryName());
         categoryRepository.save(category);
@@ -62,7 +62,6 @@ public class CategoryService {
         log.info("Save new category and image success!");
 
         log.info("Create category success!");
-        return category;
     }
 
     /**
@@ -115,12 +114,11 @@ public class CategoryService {
     /**
      * update category
      *
-     * @param categoryId - input categoryId
+     * @param categoryId        - input categoryId
      * @param categoryUpdateDto - input categoryUpdateDto
-     * @return - update category
      */
     @Transactional
-    public Category updateCategory(Long categoryId, CategoryUpdateDto categoryUpdateDto) throws GeneralSecurityException, IOException {
+    public void updateCategory(Long categoryId, CategoryUpdateDto categoryUpdateDto) throws GeneralSecurityException, IOException {
         Category existingCategory = categoryRepository.findById(categoryId).orElseThrow(
                 () -> {
                     log.error("Not found this category");
@@ -133,7 +131,7 @@ public class CategoryService {
         categoryRepository.save(existingCategory);
 
         // check if user input image
-        if(categoryUpdateDto.getImage() != null || !categoryUpdateDto.getImage().isEmpty() ) {
+        if(categoryUpdateDto.getImage() != null) {
             // loop list categoryImages
             for(CategoryImage categoryImage: categoryImageRepository.findAll()) {
                 // check if categoryId in categoryImage is same as categoryId in existingCategory
@@ -160,7 +158,6 @@ public class CategoryService {
             log.info("Save new category and image success!");
         }
         log.info("Update category success!");
-        return existingCategory;
     }
 
     /**

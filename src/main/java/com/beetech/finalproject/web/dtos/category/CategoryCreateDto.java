@@ -12,8 +12,6 @@ public class CategoryCreateDto {
     @NotEmpty(message = "{Category.categoryName.notEmpty}")
     private String categoryName;
 
-    @NotNull(message = "{Image.notNull}")
-    @NotEmpty(message = "{Image.notEmpty}")
     @ValidImage
     private MultipartFile image;
 }

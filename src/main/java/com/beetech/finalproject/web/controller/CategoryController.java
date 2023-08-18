@@ -2,7 +2,7 @@ package com.beetech.finalproject.web.controller;
 
 import com.beetech.finalproject.common.AuthException;
 import com.beetech.finalproject.domain.service.CategoryService;
-import com.beetech.finalproject.domain.service.GoogleDriveService;
+import com.beetech.finalproject.domain.service.other.GoogleDriveService;
 import com.beetech.finalproject.web.common.ResponseDto;
 import com.beetech.finalproject.web.dtos.category.CategoryCreateDto;
 import com.beetech.finalproject.web.dtos.category.CategoryRetrieveDto;

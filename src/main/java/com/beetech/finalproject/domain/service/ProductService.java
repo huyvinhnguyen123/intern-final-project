@@ -3,6 +3,12 @@ package com.beetech.finalproject.domain.service;
 import com.beetech.finalproject.common.DeleteFlag;
 import com.beetech.finalproject.domain.entities.*;
 import com.beetech.finalproject.domain.repository.*;
+import com.beetech.finalproject.domain.service.other.EmailDetailsService;
+import com.beetech.finalproject.domain.service.other.GoogleDriveService;
+import com.beetech.finalproject.utils.mail.CustomMailGenerator;
+import com.beetech.finalproject.web.dtos.email.EmailDetails;
+import com.beetech.finalproject.web.dtos.email.ProductOrigin;
+import com.beetech.finalproject.web.dtos.image.ImageRetrieveDto;
 import com.beetech.finalproject.web.dtos.page.PageEntities;
 import com.beetech.finalproject.web.dtos.product.*;
 import lombok.RequiredArgsConstructor;
@@ -36,12 +42,24 @@ public class ProductService {
     private String detailImagesPath;
 
     /**
+     * send mail to user
+     *
+     * @param emails - input list emails
+     */
+    public void sendProductUpdateMail(String[] emails, ProductOrigin productOrigin, ProductOrigin productAfterUpdate) {
+        EmailDetails emailDetails = new EmailDetails();
+        emailDetails.setRecipients(emails);
+        emailDetails.setSubject("You have 1 notification about product's information");
+        emailDetails.setMsgBody(CustomMailGenerator.productWhistListMessage(productOrigin, productAfterUpdate));
+        emailDetailService.sendMultipleMailWithFormHTML(emailDetails);
+    }
+
+    /**
      * create product
      *
      * @param productCreateDto - input productCreateDto's properties
-     * @return - product
      */
-    public Product createProduct(ProductCreateDto productCreateDto) throws GeneralSecurityException, IOException {
+    public void createProduct(ProductCreateDto productCreateDto) throws GeneralSecurityException, IOException {
         Product product = new Product();
         product.setSku(productCreateDto.getSku());
         product.setProductName(productCreateDto.getProductName());
@@ -86,7 +104,6 @@ public class ProductService {
         }
 
         log.info("Create product success");
-        return product;
     }
 
     /**
@@ -97,7 +114,7 @@ public class ProductService {
      * @return - list products with pagination
      */
     public Page<ProductRetrieveDto> searchProductsAndPagination(ProductSearchInputDto productSearchInputDto,
-                                                                 Pageable pageable) {
+                                                                Pageable pageable) {
 
         Page<Product> products = productRepository.searchProductsAndPagination(productSearchInputDto.getCategoryId(),
                 productSearchInputDto.getSku(), productSearchInputDto.getProductName(),
@@ -222,7 +239,6 @@ public class ProductService {
      *
      * @param productId - input productId
      * @param productCreateDto - input productCreateDto's properties
-     * @return - product after update
      */
     @Transactional
     public Product updateProduct(Long productId, ProductCreateDto productCreateDto) throws GeneralSecurityException, IOException {
@@ -308,7 +324,18 @@ public class ProductService {
             }
         }
         log.info("Update product success");
-        return existingProduct;
+
+        ProductOrigin productAfterUpdate = getOriginProduct(existingProduct);
+
+        List<String> emails = new ArrayList<>();
+        for(User user: existingProduct.getUsers()) {
+            emails.add(user.getLoginId());
+        }
+
+        String[] emailArray = emails.toArray(new String[0]);
+        sendProductUpdateMail(emailArray, productOrigin, productAfterUpdate);
+
+        log.info("Update product & send mail for updating product success");
     }
 
     /**
