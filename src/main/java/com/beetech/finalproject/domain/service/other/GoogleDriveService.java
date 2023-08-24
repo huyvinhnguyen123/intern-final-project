@@ -66,6 +66,7 @@ public class GoogleDriveService {
      */
     private GoogleClientSecrets loadClientSecrets() throws IOException {
         InputStream in = GoogleDriveService.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
+        assert in != null;
         return GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
     }
 
@@ -77,7 +78,7 @@ public class GoogleDriveService {
      * @throws IOException - error
      * @throws GeneralSecurityException -error
      */
-    public File uploadToDrive(MultipartFile imageFile, String folderId) throws IOException, GeneralSecurityException {
+    public File uploadToDrive(MultipartFile imageFile, String folderId) throws NullPointerException, IOException, GeneralSecurityException {
         Drive driveService = getDriveService();
 
         // name of file
@@ -154,8 +155,12 @@ public class GoogleDriveService {
         Drive driveService = getDriveService();
 
         try {
-            driveService.files().delete(fileId).execute();
-            System.out.println("File deleted successfully.");
+            if(driveService.files().get(fileId).isEmpty()) {
+                System.out.println("File not found on drive.");
+            } else {
+                driveService.files().delete(fileId).execute();
+                System.out.println("File deleted successfully.");
+            }
         } catch (IOException e) {
             System.err.println("An error occurred while deleting the file: " + e.getMessage());
         }

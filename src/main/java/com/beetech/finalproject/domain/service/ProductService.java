@@ -2,12 +2,13 @@ package com.beetech.finalproject.domain.service;
 
 import com.beetech.finalproject.common.DeleteFlag;
 import com.beetech.finalproject.domain.entities.*;
+import com.beetech.finalproject.domain.entities.statistics.ProductStatistic;
 import com.beetech.finalproject.domain.repository.*;
 import com.beetech.finalproject.domain.service.other.EmailDetailsService;
 import com.beetech.finalproject.domain.service.other.GoogleDriveService;
+import com.beetech.finalproject.domain.service.statistic.ProductStatisticService;
 import com.beetech.finalproject.utils.mail.CustomMailGenerator;
 import com.beetech.finalproject.web.dtos.email.EmailDetails;
-import com.beetech.finalproject.web.dtos.email.ProductOrigin;
 import com.beetech.finalproject.web.dtos.image.ImageRetrieveDto;
 import com.beetech.finalproject.web.dtos.page.PageEntities;
 import com.beetech.finalproject.web.dtos.product.*;
@@ -34,7 +35,11 @@ public class ProductService {
     private final ImageForProductRepository imageForProductRepository;
     private final ProductImageRepository productImageRepository;
     private final DetailImageRepository detailImageRepository;
+    private final ProductStatisticRepository productStatisticRepository;
+    private final ProductUserRepository productUserRepository;
     private final GoogleDriveService googleDriveService;
+    private final EmailDetailsService emailDetailService;
+    private final ProductStatisticService productStatisticService;
 
     @Value("${drive.folder.product}")
     private String productPath;
@@ -46,11 +51,11 @@ public class ProductService {
      *
      * @param emails - input list emails
      */
-    public void sendProductUpdateMail(String[] emails, ProductOrigin productOrigin, ProductOrigin productAfterUpdate) {
+    public void sendProductUpdateMail(String[] emails, String sku, String productName, Double price) {
         EmailDetails emailDetails = new EmailDetails();
         emailDetails.setRecipients(emails);
         emailDetails.setSubject("You have 1 notification about product's information");
-        emailDetails.setMsgBody(CustomMailGenerator.productWhistListMessage(productOrigin, productAfterUpdate));
+        emailDetails.setMsgBody(CustomMailGenerator.productWhistListMessage(sku, productName, price));
         emailDetailService.sendMultipleMailWithFormHTML(emailDetails);
     }
 
@@ -73,6 +78,8 @@ public class ProductService {
             // Get list categories for product
             if(category.getCategoryId().equals(productCreateDto.getCategoryId())) {
                 categoryForProductList.add(category);
+            } else {
+                throw new NullPointerException("Not found this category");
             }
         }
 
@@ -102,8 +109,58 @@ public class ProductService {
             detailImageRepository.save(detailImage);
             log.info("Save detail image success");
         }
-
         log.info("Create product success");
+
+        productStatisticService.createProductStatistic(product.getProductId());
+    }
+
+    /**
+     * find product by id and add view
+     *
+     * @param productId - input productId
+     * @return - product
+     */
+    public ProductDetailDto findProductById(Long productId) {
+        Product existingProduct = productRepository.findById(productId).orElseThrow(
+                () -> {
+                    log.error("Not found this product");
+                    return new NullPointerException("Not found this product: " + productId);
+                }
+        );
+        log.info("Found product");
+        productStatisticService.updateProductViewStatistic(existingProduct.getProductId());
+
+        ProductDetailDto productDetailDto = new ProductDetailDto();
+        productDetailDto.setProductId(existingProduct.getProductId());
+        productDetailDto.setSku(existingProduct.getSku());
+        productDetailDto.setProductName(existingProduct.getProductName());
+        productDetailDto.setPrice(existingProduct.getPrice());
+        productDetailDto.setDetailInfo(existingProduct.getDetailInfo());
+
+        for(ProductImage productImage: productImageRepository.findAll()) {
+            if(productImage.getProduct().equals(existingProduct)) {
+                for(ImageForProduct imageForProduct: imageForProductRepository.findAll()){
+                    if(imageForProduct.equals(productImage.getImageForProduct())) {
+                        productDetailDto.setImage(imageForProduct.getName());
+                        productDetailDto.setPath(imageForProduct.getPath());
+                    }
+                }
+            }
+        }
+
+        ProductStatistic existingProductStatistic = productStatisticRepository.findByProductId(productId).orElseThrow(
+                () -> {
+                    log.error("Not found this product");
+                    return new NullPointerException("Not found this statistic: " + productId);
+                }
+        );
+        log.info("Found this statistic");
+
+        productDetailDto.setViewsCount(existingProductStatistic.getViewCount());
+        productDetailDto.setLikesCount(existingProductStatistic.getLikeCount());
+        productDetailDto.setDislikesCount(existingProductStatistic.getDislikeCount());
+
+        return productDetailDto;
     }
 
     /**
@@ -229,8 +286,12 @@ public class ProductService {
             }
             productRetrieveSearchDetailDto.setImages(imageRetrieveDtos);
             productRetrieveSearchDetailDtos.add(productRetrieveSearchDetailDto);
+
+
+
         }
         log.info("Search products success");
+
         return productRetrieveSearchDetailDtos;
     }
 
@@ -241,7 +302,7 @@ public class ProductService {
      * @param productCreateDto - input productCreateDto's properties
      */
     @Transactional
-    public Product updateProduct(Long productId, ProductCreateDto productCreateDto) throws GeneralSecurityException, IOException {
+    public void updateProduct(Long productId, ProductCreateDto productCreateDto) throws GeneralSecurityException, IOException {
         Product existingProduct = productRepository.findById(productId).orElseThrow(
                 ()->{
                     log.error("Not found this product");
@@ -325,16 +386,25 @@ public class ProductService {
         }
         log.info("Update product success");
 
-        ProductOrigin productAfterUpdate = getOriginProduct(existingProduct);
+        for(ProductUser productUser: productUserRepository.findAll()) {
+            if(productUser.getProduct().equals(existingProduct)) {
+                User userLikeProduct = productUser.getUser();
+                ProductUser existingProductUser = productUserRepository.findByProductAndUser(existingProduct, userLikeProduct);
 
-        List<String> emails = new ArrayList<>();
-        for(User user: existingProduct.getUsers()) {
-            emails.add(user.getLoginId());
+                if(existingProductUser.getIsLike().equals(true)) {
+                    List<String> emails = new ArrayList<>();
+                    emails.add(userLikeProduct.getLoginId());
+
+                    String[] emailArray = emails.toArray(new String[0]);
+                    sendProductUpdateMail(
+                            emailArray,
+                            existingProduct.getSku(),
+                            existingProduct.getProductName(),
+                            existingProduct.getPrice()
+                    );
+                }
+            }
         }
-
-        String[] emailArray = emails.toArray(new String[0]);
-        sendProductUpdateMail(emailArray, productOrigin, productAfterUpdate);
-
         log.info("Update product & send mail for updating product success");
     }
 
@@ -398,5 +468,84 @@ public class ProductService {
             }
         }
         return fileId;
+    }
+
+    /**
+     * like product by user
+     *
+     * @param productId - input productId
+     * @param user - input current user
+     */
+    @Transactional
+    public void likeProduct(Long productId, User user) {
+        Product existingProduct = productRepository.findById(productId).orElseThrow(
+                () -> {
+                    log.error("Not found this product");
+                    return new NullPointerException("Not found this product: " + productId);
+                }
+        );
+        log.info("Found this product");
+
+        ProductUser existingProductUser = productUserRepository.findByProductAndUser(existingProduct, user);
+        if (existingProductUser != null) {
+            // User has already interacted with the product, handle accordingly
+            if (!existingProductUser.getIsLike()) {
+                existingProductUser.setIsLike(true);
+                productUserRepository.save(existingProductUser);
+                productStatisticService.updateProductLikeStatistic(productId);
+                log.info("Updated product user, set like success");
+            } else {
+                log.info("user has been liked this product");
+            }
+        } else {
+            ProductUser productUser = new ProductUser();
+            productUser.setProduct(existingProduct);
+            productUser.setUser(user);
+            productUser.setIsLike(true);
+
+            productUserRepository.save(productUser);
+            productStatisticService.updateProductLikeStatistic(productId);
+            log.info("Saved product user, set like success");
+        }
+    }
+
+    /**
+     * dislike product by user
+     *
+     * @param productId - input productId
+     * @param user - input current user
+     */
+    @Transactional
+    public void dislikeProduct(Long productId, User user) {
+        Product existingProduct = productRepository.findById(productId).orElseThrow(
+                () -> {
+                    log.error("Not found this product");
+                    return new NullPointerException("Not found this product: " + productId);
+                }
+        );
+        log.info("Found this product");
+
+        ProductUser existingProductUser = productUserRepository.findByProductAndUser(existingProduct, user);
+        if (existingProductUser != null) {
+            // User has already interacted with the product, handle accordingly
+            if (existingProductUser.getIsLike()) {
+                existingProductUser.setIsLike(false);
+                productUserRepository.save(existingProductUser);
+                productStatisticService.updateProductDisLikeStatistic(productId);
+                productStatisticService.UpdateProductUnlikeStatistic(productId);
+                log.info("Updated product user, set dislike success");
+            } else {
+                log.info("user has been disliked this product");
+            }
+        } else {
+            ProductUser productUser = new ProductUser();
+            productUser.setProduct(existingProduct);
+            productUser.setUser(user);
+            productUser.setIsLike(false);
+
+            productUserRepository.save(productUser);
+            productStatisticService.updateProductDisLikeStatistic(productId);
+            log.info("Saved product user, set dislike success");
+        }
     }
 }

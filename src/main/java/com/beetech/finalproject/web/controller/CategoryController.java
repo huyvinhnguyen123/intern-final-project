@@ -4,6 +4,7 @@ import com.beetech.finalproject.common.AuthException;
 import com.beetech.finalproject.domain.service.CategoryService;
 import com.beetech.finalproject.domain.service.other.GoogleDriveService;
 import com.beetech.finalproject.web.common.ResponseDto;
+import com.beetech.finalproject.web.controller.exception.HandleRequestException;
 import com.beetech.finalproject.web.dtos.category.CategoryCreateDto;
 import com.beetech.finalproject.web.dtos.category.CategoryRetrieveDto;
 import com.beetech.finalproject.web.dtos.category.CategoryUpdateDto;
@@ -41,9 +42,7 @@ public class CategoryController {
     @Value("${ValidInput}")
     private String validInput;
 
-    @PostMapping(value = "/add-category",
-            consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
-            produces = {MediaType.APPLICATION_JSON_VALUE})
+    @PostMapping(value = "/add-category")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResponseDto<Object>> createCategory(@Valid @RequestBody @ModelAttribute
                                                                   CategoryCreateDto categoryCreateDto, BindingResult bindingResult) {
@@ -60,7 +59,7 @@ public class CategoryController {
             return ResponseEntity.ok(ResponseDto.build().withMessage("OK"));
         } catch (AuthenticationException | GeneralSecurityException | IOException e) {
             log.error("Create category failed: ", e);
-            return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST, "Failed to create category: " + e.getMessage());
+            return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST,"Failed to create category: " + e.getMessage());
         }
     }
 
@@ -83,9 +82,7 @@ public class CategoryController {
         return ResponseEntity.ok(ResponseDto.build().withData(categoryResponses));
     }
 
-    @PutMapping(value = "/delete-category",
-            consumes = {MediaType.MULTIPART_FORM_DATA_VALUE},
-            produces = {MediaType.APPLICATION_JSON_VALUE})
+    @PutMapping(value = "/delete-category")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResponseDto<Object>> updateCategory(@Valid @RequestBody @ModelAttribute
                                                               CategoryUpdateDto categoryUpdateDto,
@@ -101,7 +98,7 @@ public class CategoryController {
         try {
             categoryService.updateCategory(categoryId, categoryUpdateDto);
             return ResponseEntity.ok(ResponseDto.build().withMessage("OK"));
-        } catch (AuthenticationException | GeneralSecurityException | IOException | MaxUploadSizeExceededException e) {
+        } catch (AuthenticationException | GeneralSecurityException | IOException e) {
             log.error("Update category failed: ", e);
             return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST,"Failed to update category: " + e.getMessage());
         }

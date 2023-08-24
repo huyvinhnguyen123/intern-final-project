@@ -3,16 +3,22 @@ package com.beetech.finalproject.domain.service.other;
 import com.beetech.finalproject.common.DeleteFlag;
 import com.beetech.finalproject.domain.entities.*;
 import com.beetech.finalproject.domain.repository.*;
+import com.beetech.finalproject.domain.service.statistic.ProductStatisticService;
+import com.beetech.finalproject.exception.ValidFileExtensionException;
+import com.beetech.finalproject.web.dtos.statistic.ProductStatisticDto;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
+import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +31,89 @@ public class CSVParserService {
     private final ImageForProductRepository imageForProductRepository;
     private final ProductImageRepository productImageRepository;
     private final DetailImageRepository detailImageRepository;
+    private final ProductStatisticService productStatisticService;
+
+    /**
+     * check file extension (only accept csv file)
+     *
+     * @param file - input file
+     */
+    public void importProductCSVFile(MultipartFile file) throws IOException {
+        String fileName = file.getOriginalFilename();
+
+        // Check file extension
+        assert fileName != null;
+        String fileExtension = fileName.substring(fileName.lastIndexOf(".") + 1);
+        if (!fileExtension.equalsIgnoreCase("csv")) {
+            throw new ValidFileExtensionException("Invalid file format. Only CSV files are allowed.");
+        }
+
+        parseProduct(file.getInputStream());
+    }
+
+    /**
+     * export file csv
+     *
+     * @param writer - input writer
+     * @throws IOException - error
+     */
+    public void exportProductCSVFile(Writer writer, String time, String title) throws IOException {
+        List<ProductStatisticDto> productStatisticDtoList = new ArrayList<>();
+
+        // statistic today
+        if(time.equals("today")) {
+            title = "Product's statistic today";
+            productStatisticDtoList = productStatisticService.getProductStatistic();
+        }
+
+        // statistic this week
+        if(time.equals("week")) {
+            title = "Product's statistic this week";
+            productStatisticDtoList = productStatisticService.getProductStatisticByWeek();
+        }
+
+        // statistic this month
+        if(time.equals("month")) {
+            title = "Product's statistic this month";
+            productStatisticDtoList = productStatisticService.getProductStatisticByMonth();
+        }
+
+        // statistic this year
+        if(time.equals("year")) {
+            title = "Product's statistic this year";
+            productStatisticDtoList = productStatisticService.getProductStatisticByYear();
+        }
+
+        CSVWriter csvWriter = new CSVWriter(writer);
+
+        // write header
+        csvWriter.writeNext(new String[]{title});
+        csvWriter.writeNext(new String[]{
+                "ID","SKU","NAME","PRICE","VIEWS","LIKES","DISLIKES","DATE OF STATISTIC"
+        });
+        csvWriter.writeNext(new String[]{
+                "-----", "-----", "-----",
+                "-----", "-----", "-----",
+                "-----", "-----"
+        });
+
+        // write data
+        for(ProductStatisticDto productStatisticDto: productStatisticDtoList) {
+            String[] data = {
+                    productStatisticDto.getProductId().toString(),
+                    productStatisticDto.getSku(),
+                    productStatisticDto.getProductName(),
+                    productStatisticDto.getPrice().toString(),
+                    productStatisticDto.getViewsCount().toString(),
+                    productStatisticDto.getLikesCount().toString(),
+                    productStatisticDto.getDislikesCount().toString(),
+                    productStatisticDto.getStatisticDate()
+            };
+            csvWriter.writeNext(data);
+        }
+        log.info("Export file csv success");
+        csvWriter.close();
+    }
 
     /**
      * Import product's file
@@ -92,6 +181,8 @@ public class CSVParserService {
                 detailImage.setImageForProduct(imageForProduct);
                 detailImageRepository.save(detailImage);
                 log.info("Save detail image success");
+
+                productStatisticService.createProductStatistic(product.getProductId());
             }
         } catch (CsvValidationException e) {
             throw new RuntimeException(e);

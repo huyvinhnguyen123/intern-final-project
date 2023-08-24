@@ -1,5 +1,6 @@
 package com.beetech.finalproject.web.dtos.product;
 
+import com.beetech.finalproject.web.dtos.image.ImageRetrieveDto;
 import lombok.Data;
 
 import java.util.List;

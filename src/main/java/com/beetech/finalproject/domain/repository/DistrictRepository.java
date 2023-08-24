@@ -10,9 +10,10 @@ import java.util.Optional;
 
 @Repository
 public interface DistrictRepository extends ListCrudRepository<District, Long> {
-    @Query(value = "SELECT d.district_id, d.district_name, c.city_id  \n" +
-            "FROM district d \n" +
-            "LEFT JOIN city c ON c.city_id = d.city_id \n" +
-            "WHERE c.city_id = ?1", nativeQuery = true)
+    @Query(value = """
+            SELECT d.district_id, d.district_name, c.city_id \s
+            FROM district d\s
+            LEFT JOIN city c ON c.city_id = d.city_id\s
+            WHERE c.city_id = ?1""", nativeQuery = true)
     Optional<List<District>> findAllDistrictByCityId(Long cityId);
 }

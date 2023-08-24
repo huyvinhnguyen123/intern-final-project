@@ -46,4 +46,12 @@ public class Product {
             inverseJoinColumns=@JoinColumn(name="category_id")
     )
     private List<Category> categories;
+
+//    @ManyToMany(cascade=CascadeType.ALL)
+//    @JoinTable(
+//            name="product_user",
+//            joinColumns=@JoinColumn(name="product_id"),
+//            inverseJoinColumns=@JoinColumn(name="user_id")
+//    )
+//    private List<User> users;
 }

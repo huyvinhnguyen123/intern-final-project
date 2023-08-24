@@ -6,6 +6,7 @@ import com.beetech.finalproject.common.DeleteFlag;
 import com.beetech.finalproject.domain.entities.User;
 import com.beetech.finalproject.domain.service.UserService;
 import com.beetech.finalproject.web.common.ResponseDto;
+import com.beetech.finalproject.web.controller.exception.HandleRequestException;
 import com.beetech.finalproject.web.dtos.user.UserCreateDto;
 import com.beetech.finalproject.web.dtos.user.UserLoginDto;
 import com.beetech.finalproject.web.response.LoginResponse;
@@ -59,16 +60,13 @@ public class AuthenticationController {
             return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST, validInput, fieldErrors, bindingResult);
         }
 
-        userService.registerNewUser(userCreateDto);
-        return ResponseEntity.ok(ResponseDto.build().withMessage("OK"));
-
-//        try {
-//            userService.registerNewUser(userCreateDto);
-//            return ResponseEntity.ok(ResponseDto.build().withMessage("OK"));
-//        } catch(AccountException e) {
-//            log.error("Create user failed: " + e.getMessage());
-//            return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST,"Failed to create user: " + e.getMessage());
-//        }
+        try {
+            userService.registerNewUser(userCreateDto);
+            return ResponseEntity.ok(ResponseDto.build().withMessage("OK"));
+        } catch(AccountException e) {
+            log.error("Create user failed: " + e.getMessage());
+            return HandleRequestException.handleAccessDeniedException("Failed to create user: " + e.getMessage());
+        }
     }
 
     /**
