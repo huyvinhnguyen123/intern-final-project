@@ -10,10 +10,4 @@ public class FinalprojectApplication {
 		SpringApplication.run(FinalprojectApplication.class, args);
 	}
 
-//	@Override
-//	public void run(String... args) throws Exception {
-//		// Call the testRedisConnection method to check the Redis connectivity when the application starts.
-//		redisConnectionTest.testRedisConnection();
-//	}
-
 }

@@ -7,6 +7,7 @@ import com.beetech.finalproject.domain.entities.User;
 import com.beetech.finalproject.domain.enums.Roles;
 import com.beetech.finalproject.domain.repository.UserRepository;
 import com.beetech.finalproject.utils.CustomDateTimeFormatter;
+import com.beetech.finalproject.web.controller.exception.HandleRequestException;
 import com.beetech.finalproject.web.dtos.user.UserChangePasswordDto;
 import com.beetech.finalproject.web.dtos.user.UserCreateDto;
 import com.beetech.finalproject.web.dtos.user.UserRetrieveDto;

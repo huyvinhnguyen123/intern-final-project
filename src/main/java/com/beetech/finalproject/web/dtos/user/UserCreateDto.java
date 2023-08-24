@@ -2,6 +2,7 @@ package com.beetech.finalproject.web.dtos.user;
 
 import com.beetech.finalproject.validate.birthday.ValidBirthDay;
 import com.beetech.finalproject.validate.password.ValidPassword;
+import com.beetech.finalproject.validate.username.ValidUsername;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -9,8 +10,7 @@ import lombok.Data;
 
 @Data
 public class UserCreateDto {
-    @NotNull(message = "{User.username.notNull}")
-    @NotEmpty(message = "{User.username.notEmpty}")
+    @ValidUsername
     private String username;
 
     @NotNull(message = "{User.birthDay.notNull}")

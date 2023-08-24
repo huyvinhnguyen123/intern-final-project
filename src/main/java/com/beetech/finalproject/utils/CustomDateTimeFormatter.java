@@ -13,11 +13,10 @@ public class CustomDateTimeFormatter {
         return date;
     }
 
-    public static LocalDate dateOfOrder() {
-        Date date = new Date();
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        String currentDate = dateFormat.format(date);
-        LocalDate localDate = LocalDate.parse(currentDate);
-        return localDate;
+    public static String getLocalDate() {
+        LocalDate today = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String formattedString = today.format(formatter);
+        return formattedString;
     }
 }

@@ -1,52 +1,52 @@
-//package com.beetech.finalproject.web.controller;
-//
-//import com.beetech.finalproject.common.AuthException;
-//import com.beetech.finalproject.domain.entities.User;
-//import com.beetech.finalproject.domain.service.CartService;
-//import com.beetech.finalproject.web.common.ResponseDto;
-//import com.beetech.finalproject.web.dtos.cart.*;
-//import com.beetech.finalproject.web.response.*;
-//import lombok.RequiredArgsConstructor;
-//import lombok.extern.slf4j.Slf4j;
-//import org.springframework.http.ResponseEntity;
-//import org.springframework.security.core.Authentication;
-//import org.springframework.security.core.AuthenticationException;
-//import org.springframework.web.bind.annotation.*;
-//
-//@RestController
-//@Slf4j
-//@RequiredArgsConstructor
-//@RequestMapping("api/v1")
-//public class CartController {
-//    private final CartService cartService;
-//
-//    @PostMapping("/add-cart")
-//    public ResponseEntity<ResponseDto<Object>> addProductToCart(@RequestBody CartCreateDto cartCreateDto, Authentication authentication) {
-//        if (authentication != null && authentication.isAuthenticated()) {
-//            User currentUser = (User) authentication.getPrincipal();
-//
-//            log.info("request adding product to cart");
-//            CartRetrieveCreateDto cartRetrieveCreateDto = cartService.addProductToCart(cartCreateDto, currentUser);
-//            CartResponseCreate cartResponse = CartResponseCreate.builder()
-//                    .token(cartRetrieveCreateDto.getToken())
-//                    .totalPrice(cartRetrieveCreateDto.getTotalPrice())
-//                    .versionNo(cartRetrieveCreateDto.getVersionNo())
-//                    .build();
-//
-//            return ResponseEntity.ok(ResponseDto.build().withData(cartResponse));
-//        } else {
-//            log.info("request adding product to cart without authentication");
-//            CartRetrieveCreateDto cartRetrieveCreateDto = cartService.addProductToCartWithoutLogin(cartCreateDto);
-//            CartResponseCreate cartResponse = CartResponseCreate.builder()
-//                    .token(cartRetrieveCreateDto.getToken())
-//                    .totalPrice(cartRetrieveCreateDto.getTotalPrice())
-//                    .versionNo(cartRetrieveCreateDto.getVersionNo())
-//                    .build();
-//
-//            return ResponseEntity.ok(ResponseDto.build().withData(cartResponse));
-//        }
-//    }
-//
+package com.beetech.finalproject.web.controller;
+
+import com.beetech.finalproject.common.AuthException;
+import com.beetech.finalproject.domain.entities.User;
+import com.beetech.finalproject.domain.service.CartService;
+import com.beetech.finalproject.web.common.ResponseDto;
+import com.beetech.finalproject.web.dtos.cart.*;
+import com.beetech.finalproject.web.response.*;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@Slf4j
+@RequiredArgsConstructor
+@RequestMapping("api/v1")
+public class CartController {
+    private final CartService cartService;
+
+    @PostMapping("/add-cart")
+    public ResponseEntity<ResponseDto<Object>> addProductToCart(@RequestBody CartCreateDto cartCreateDto, Authentication authentication) {
+        if (authentication != null && authentication.isAuthenticated()) {
+            User currentUser = (User) authentication.getPrincipal();
+
+            log.info("request adding product to cart");
+            CartRetrieveCreateDto cartRetrieveCreateDto = cartService.addProductToCart(cartCreateDto, currentUser);
+            CartResponseCreate cartResponse = CartResponseCreate.builder()
+                    .token(cartRetrieveCreateDto.getToken())
+                    .totalPrice(cartRetrieveCreateDto.getTotalPrice())
+                    .versionNo(cartRetrieveCreateDto.getVersionNo())
+                    .build();
+
+            return ResponseEntity.ok(ResponseDto.build().withData(cartResponse));
+        } else {
+            log.info("request adding product to cart without authentication");
+            CartRetrieveCreateDto cartRetrieveCreateDto = cartService.addProductToCartWithoutLogin(cartCreateDto);
+            CartResponseCreate cartResponse = CartResponseCreate.builder()
+                    .token(cartRetrieveCreateDto.getToken())
+                    .totalPrice(cartRetrieveCreateDto.getTotalPrice())
+                    .versionNo(cartRetrieveCreateDto.getVersionNo())
+                    .build();
+
+            return ResponseEntity.ok(ResponseDto.build().withData(cartResponse));
+        }
+    }
+
 //    @PostMapping("/sync-cart")
 //    public ResponseEntity<ResponseDto<Object>> syncCartAfterLogin(@RequestBody String token, Authentication authentication) {
 //        log.info("request syncing cart");
@@ -161,4 +161,4 @@
 //            return ResponseEntity.ok(ResponseDto.build().withData(cartResponse));
 //        }
 //    }
-//}
+}

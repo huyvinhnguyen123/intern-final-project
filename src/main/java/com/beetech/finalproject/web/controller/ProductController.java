@@ -5,9 +5,12 @@ import com.beetech.finalproject.domain.entities.User;
 import com.beetech.finalproject.domain.service.ProductService;
 import com.beetech.finalproject.domain.service.other.CSVParserService;
 import com.beetech.finalproject.domain.service.other.GoogleDriveService;
+import com.beetech.finalproject.exception.ValidFileExtensionException;
 import com.beetech.finalproject.web.common.ResponseDto;
+import com.beetech.finalproject.web.controller.exception.HandleRequestException;
 import com.beetech.finalproject.web.dtos.product.*;
 import com.beetech.finalproject.web.response.ProductDetailResponse;
+import com.beetech.finalproject.web.response.ProductDetailStatisticResponse;
 import com.beetech.finalproject.web.response.ProductResponse;
 import com.google.api.services.drive.model.File;
 import lombok.RequiredArgsConstructor;
@@ -45,9 +48,9 @@ public class ProductController {
         log.info("request importing products");
 
         try {
-            csvParserService.parseProduct(file.getInputStream());
+            csvParserService.importProductCSVFile(file);
             return ResponseEntity.ok(ResponseDto.build().withMessage("OK"));
-        } catch (IOException e) {
+        } catch (ValidFileExtensionException | IOException e) {
             return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST,"Failed to import products: " + e.getMessage());
         }
     }
@@ -66,6 +69,25 @@ public class ProductController {
         } catch (AuthenticationException | GeneralSecurityException | IOException e) {
             log.error("Create product failed: ", e);
             return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST,"Failed to create product: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/products/product")
+    public ResponseEntity<ResponseDto<Object>> findProductById(@RequestParam Long productId) {
+
+        log.info("request select product");
+        try {
+
+            ProductDetailDto productDetailDto = productService.findProductById(productId);
+
+            ProductDetailStatisticResponse productResponse =  ProductDetailStatisticResponse.builder()
+                    .productDetailDto(productDetailDto)
+                    .build();
+
+            return ResponseEntity.ok(ResponseDto.build().withData(productResponse));
+        } catch (AuthenticationException e) {
+            log.error("Select product failed: " + e.getMessage());
+            return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST,"Failed to search product: " + e.getMessage());
         }
     }
 
@@ -151,7 +173,7 @@ public class ProductController {
     @GetMapping("/like-product")
     public ResponseEntity<ResponseDto<Object>> likeProduct(@RequestParam Long productId,
                                                            Authentication authentication) {
-        log.info("request liking product");
+        log.info("request like product");
 
         try {
             User currentUser = (User) authentication.getPrincipal();
@@ -160,6 +182,21 @@ public class ProductController {
         } catch (AuthenticationException e) {
             log.error("Like product failed: " + e.getMessage());
             return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST,"Failed to like product: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/dislike-product")
+    public ResponseEntity<ResponseDto<Object>> dislikeProduct(@RequestParam Long productId,
+                                                           Authentication authentication) {
+        log.info("request dislike product");
+
+        try {
+            User currentUser = (User) authentication.getPrincipal();
+            productService.dislikeProduct(productId,currentUser);
+            return ResponseEntity.ok(ResponseDto.build().withMessage("OK"));
+        } catch (AuthenticationException e) {
+            log.error("Dislike product failed: " + e.getMessage());
+            return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST,"Failed to dislike product: " + e.getMessage());
         }
     }
 

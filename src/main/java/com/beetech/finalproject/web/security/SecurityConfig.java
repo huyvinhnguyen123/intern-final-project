@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/cart-info").permitAll()
                         .requestMatchers("/api/v1/cart-quantity").permitAll()
                         .requestMatchers("/api/v1/delete-cart").permitAll()
+                        .requestMatchers("/api/v1/products/product").permitAll()
                 )
                 .authorizeHttpRequests((requests) -> requests // allow for login authentication & for ROLE_USER and ROLE_ADMIN
                         // for all request in this url has role admin & user will be access

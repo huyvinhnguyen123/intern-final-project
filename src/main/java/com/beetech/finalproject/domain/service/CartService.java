@@ -1,170 +1,173 @@
-//package com.beetech.finalproject.domain.service;
-//
-//import com.beetech.finalproject.domain.entities.*;
-//import com.beetech.finalproject.domain.enums.Status;
-//import com.beetech.finalproject.domain.repository.CartDetailRepository;
-//import com.beetech.finalproject.domain.repository.CartRepository;
-//import com.beetech.finalproject.domain.repository.ProductRepository;
-//import com.beetech.finalproject.utils.CustomGenerate;
-//import com.beetech.finalproject.web.dtos.cart.*;
-//import lombok.RequiredArgsConstructor;
-//import lombok.extern.slf4j.Slf4j;
-//import org.springframework.stereotype.Service;
-//import org.springframework.transaction.annotation.Transactional;
-//
-//import java.util.ArrayList;
-//import java.util.Iterator;
-//import java.util.List;
-//
-//@Service
-//@Slf4j
-//@RequiredArgsConstructor
-//public class CartService {
-//    private final CartRepository cartRepository;
-//    private final CartDetailRepository cartDetailRepository;
-//    private final ProductRepository productRepository;
-//
-//    /**
-//     * create new cart
-//     *
-//     * @return - cart
-//     */
-//    private Cart createCart() {
-//        Cart cart = new Cart();
-//        cart.setTotalPrice(0.0);
-//        cart.setVersionNo(1.0);
-//        cart.setToken(CustomGenerate.generateRandomString(20));
-//        cartRepository.save(cart);
-//
-//        log.info("Save new cart success");
-//        return cart;
-//    }
-//
-//    /**
-//     * Add new product to cart
-//     *
-//     * @param cartCreateDto - input cartCreateDto's properties
-//     * @return - cartRetrieveCreateDto
-//     */
-//    @Transactional
-//    public CartRetrieveCreateDto addProductToCart(CartCreateDto cartCreateDto, User user) {
-//        Product existingProduct = productRepository.findById(cartCreateDto.getProductId()).orElseThrow(
-//                ()->{
-//                    log.error("Not found this product");
-//                    return new NullPointerException("Not found this product: " + cartCreateDto.getProductId());
-//                }
-//        );
-//        log.info("Found product");
-//
-//        User existingUser = user;
-//
-//        Cart existingCart = existingUser.getCart();
-//
-//        if(existingCart == null) {
-//            Cart cart = createCart();
-//
-//            cart.setUser(existingUser);
-//            cartRepository.save(cart);
-//            log.info("Update cart with user success");
-//
-//            CartDetail cartDetail = new CartDetail();
-//            cartDetail.setCart(cart);
-//            cartDetail.setProduct(existingProduct);
-//            cartDetail.setQuantity(cartCreateDto.getQuantity());
-//            cartDetail.setPrice(existingProduct.getPrice());
-//            cartDetail.setTotalPrice(cartDetail.getPrice() * cartDetail.getQuantity());
-//            cartDetail.setStatusCode(Status.ACTIVE.getCode());
-//            cartDetailRepository.save(cartDetail);
-//            log.info("Save new cart detail success");
-//
-//            cart.setTotalPrice(cartDetail.getTotalPrice());
-//            cart.setVersionNo(cart.getVersionNo() + 1);
-//            cartRepository.save(cart);
-//            log.info("save update cart success");
-//
-//            CartRetrieveCreateDto cartRetrieveCreateDto = new CartRetrieveCreateDto();
-//            cartRetrieveCreateDto.setToken(cart.getToken());
-//            cartRetrieveCreateDto.setTotalPrice(cart.getTotalPrice());
-//            cartRetrieveCreateDto.setVersionNo(cart.getVersionNo());
-//            log.info("Add new product to cart success");
-//
-//            return cartRetrieveCreateDto;
-//        } else {
-//            for(CartDetail cartDetail: existingCart.getCartDetails()) {
-//                cartDetail.setCart(existingCart);
-//                cartDetail.setProduct(existingProduct);
-//
-//                if(cartDetail.getProduct().getProductId().equals(existingProduct.getProductId())) {
-//                    cartDetail.setQuantity(cartCreateDto.getQuantity() + cartDetail.getQuantity());
-//                } else {
-//                    cartDetail.setQuantity(cartCreateDto.getQuantity());
-//                    cartDetail.setPrice(existingProduct.getPrice());
-//                }
-//                cartDetail.setTotalPrice(cartDetail.getPrice() * cartDetail.getQuantity());
-//                cartDetail.setStatusCode(Status.ACTIVE.getCode());
-//                cartDetailRepository.save(cartDetail);
-//                log.info("Save new cart detail success");
-//
-//                existingCart.setTotalPrice(cartDetail.getTotalPrice());
-//                existingCart.setVersionNo(existingCart.getVersionNo() + 1);
-//                cartRepository.save(existingCart);
-//                log.info("save update cart success");
-//            }
-//
-//            CartRetrieveCreateDto cartRetrieveCreateDto = new CartRetrieveCreateDto();
-//            cartRetrieveCreateDto.setToken(existingCart.getToken());
-//            cartRetrieveCreateDto.setTotalPrice(existingCart.getTotalPrice());
-//            cartRetrieveCreateDto.setVersionNo(existingCart.getVersionNo());
-//            log.info("Add new product to cart success");
-//
-//            return cartRetrieveCreateDto;
-//        }
-//    }
-//
-//    /**
-//     * Add new product to cart without login
-//     *
-//     * @param cartCreateDto - input cartCreateDto's properties
-//     * @return - cartRetrieveCreateDto
-//     */
-//    @Transactional
-//    public CartRetrieveCreateDto addProductToCartWithoutLogin(CartCreateDto cartCreateDto) {
-//        Product existingProduct = productRepository.findById(cartCreateDto.getProductId()).orElseThrow(
-//                ()->{
-//                    log.error("Not found this product");
-//                    return new NullPointerException("Not found this product: " + cartCreateDto.getProductId());
-//                }
-//        );
-//        log.info("Found product");
-//
-//        log.info("Not authentication");
-//        Cart cartWithoutLogin = createCart();
-//        log.info("Create new cart success");
-//
-//        CartDetail cartDetail = new CartDetail();
-//        cartDetail.setCart(cartWithoutLogin);
-//        cartDetail.setProduct(existingProduct);
-//        cartDetail.setQuantity(cartCreateDto.getQuantity());
-//        cartDetail.setPrice(existingProduct.getPrice());
-//        cartDetail.setTotalPrice(cartDetail.getPrice() * cartDetail.getQuantity());
-//        cartDetail.setStatusCode(Status.ACTIVE.getCode());
-//        cartDetailRepository.save(cartDetail);
-//        log.info("Save new cart detail success");
-//
-//        cartWithoutLogin.setTotalPrice(cartDetail.getTotalPrice());
-//        cartWithoutLogin.setVersionNo(cartWithoutLogin.getVersionNo() + 1);
-//        cartRepository.save(cartWithoutLogin);
-//        log.info("save update cart success");
-//
-//        CartRetrieveCreateDto cartRetrieveCreateDto = new CartRetrieveCreateDto();
-//        cartRetrieveCreateDto.setToken(cartWithoutLogin.getToken());
-//        cartRetrieveCreateDto.setTotalPrice(cartWithoutLogin.getTotalPrice());
-//        cartRetrieveCreateDto.setVersionNo(cartWithoutLogin.getVersionNo());
-//        log.info("Add new product to cart success");
-//
-//        return cartRetrieveCreateDto;
-//    }
-//
+package com.beetech.finalproject.domain.service;
+
+import com.beetech.finalproject.domain.entities.*;
+import com.beetech.finalproject.domain.enums.Status;
+import com.beetech.finalproject.domain.repository.CartDetailRepository;
+import com.beetech.finalproject.domain.repository.CartRepository;
+import com.beetech.finalproject.domain.repository.ProductRepository;
+import com.beetech.finalproject.domain.service.statistic.CartStatisticService;
+import com.beetech.finalproject.utils.CustomGenerate;
+import com.beetech.finalproject.web.dtos.cart.*;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+@Service
+@Slf4j
+@RequiredArgsConstructor
+public class CartService {
+    private final CartRepository cartRepository;
+    private final CartDetailRepository cartDetailRepository;
+    private final ProductRepository productRepository;
+    private final CartStatisticService cartStatisticService;
+
+    /**
+     * create new cart
+     *
+     * @return - cart
+     */
+    private Cart createCart() {
+        Cart cart = new Cart();
+        cart.setTotalPrice(0.0);
+        cart.setVersionNo(1.0);
+        cart.setToken(CustomGenerate.generateRandomString(20));
+        cartRepository.save(cart);
+        log.info("Save new cart success");
+
+        cartStatisticService.createCartStatistic(cart.getCartId());
+        return cart;
+    }
+
+    /**
+     * Add new product to cart
+     *
+     * @param cartCreateDto - input cartCreateDto's properties
+     * @return - cartRetrieveCreateDto
+     */
+    @Transactional
+    public CartRetrieveCreateDto addProductToCart(CartCreateDto cartCreateDto, User user) {
+        Product existingProduct = productRepository.findById(cartCreateDto.getProductId()).orElseThrow(
+                ()->{
+                    log.error("Not found this product");
+                    return new NullPointerException("Not found this product: " + cartCreateDto.getProductId());
+                }
+        );
+        log.info("Found product");
+
+        Cart existingCart = user.getCart();
+
+        if(existingCart == null) {
+            Cart cart = createCart();
+
+            cart.setUser(user);
+            cartRepository.save(cart);
+            log.info("Update cart with user success");
+
+            CartDetail cartDetail = new CartDetail();
+            cartDetail.setCart(cart);
+            cartDetail.setProduct(existingProduct);
+            cartDetail.setQuantity(cartCreateDto.getQuantity());
+            cartDetail.setPrice(existingProduct.getPrice());
+            cartDetail.setTotalPrice(cartDetail.getPrice() * cartDetail.getQuantity());
+            cartDetail.setStatusCode(Status.ACTIVE.getCode());
+            cartDetailRepository.save(cartDetail);
+            log.info("Save new cart detail success");
+
+            cart.setTotalPrice(cartDetail.getTotalPrice());
+            cart.setVersionNo(cart.getVersionNo() + 1);
+            cartRepository.save(cart);
+            log.info("save update cart success");
+
+            CartRetrieveCreateDto cartRetrieveCreateDto = new CartRetrieveCreateDto();
+            cartRetrieveCreateDto.setToken(cart.getToken());
+            cartRetrieveCreateDto.setTotalPrice(cart.getTotalPrice());
+            cartRetrieveCreateDto.setVersionNo(cart.getVersionNo());
+            log.info("Add new product to cart success");
+
+            return cartRetrieveCreateDto;
+        } else {
+            for(CartDetail cartDetail: cartDetailRepository.findAll()) {
+                if(cartDetail.getCart().equals(existingCart)) {
+                    cartDetail.setCart(existingCart);
+                    cartDetail.setProduct(existingProduct);
+
+                    if(cartDetail.getProduct().getProductId().equals(existingProduct.getProductId())) {
+                        cartDetail.setQuantity(cartCreateDto.getQuantity() + cartDetail.getQuantity());
+                    } else {
+                        cartDetail.setQuantity(cartCreateDto.getQuantity());
+                        cartDetail.setPrice(existingProduct.getPrice());
+                    }
+                    cartDetail.setTotalPrice(cartDetail.getPrice() * cartDetail.getQuantity());
+                    cartDetail.setStatusCode(Status.ACTIVE.getCode());
+                    cartDetailRepository.save(cartDetail);
+                    log.info("Save new cart detail success");
+
+                    existingCart.setTotalPrice(cartDetail.getTotalPrice());
+                    existingCart.setVersionNo(existingCart.getVersionNo() + 1);
+                    cartRepository.save(existingCart);
+                    log.info("save update cart success");
+                }
+            }
+
+            CartRetrieveCreateDto cartRetrieveCreateDto = new CartRetrieveCreateDto();
+            cartRetrieveCreateDto.setToken(existingCart.getToken());
+            cartRetrieveCreateDto.setTotalPrice(existingCart.getTotalPrice());
+            cartRetrieveCreateDto.setVersionNo(existingCart.getVersionNo());
+            log.info("Add new product to cart success");
+
+            return cartRetrieveCreateDto;
+        }
+    }
+
+    /**
+     * Add new product to cart without login
+     *
+     * @param cartCreateDto - input cartCreateDto's properties
+     * @return - cartRetrieveCreateDto
+     */
+    @Transactional
+    public CartRetrieveCreateDto addProductToCartWithoutLogin(CartCreateDto cartCreateDto) {
+        Product existingProduct = productRepository.findById(cartCreateDto.getProductId()).orElseThrow(
+                ()->{
+                    log.error("Not found this product");
+                    return new NullPointerException("Not found this product: " + cartCreateDto.getProductId());
+                }
+        );
+        log.info("Found product");
+
+        log.info("Not authentication");
+        Cart cartWithoutLogin = createCart();
+        log.info("Create new cart success");
+
+        CartDetail cartDetail = new CartDetail();
+        cartDetail.setCart(cartWithoutLogin);
+        cartDetail.setProduct(existingProduct);
+        cartDetail.setQuantity(cartCreateDto.getQuantity());
+        cartDetail.setPrice(existingProduct.getPrice());
+        cartDetail.setTotalPrice(cartDetail.getPrice() * cartDetail.getQuantity());
+        cartDetail.setStatusCode(Status.ACTIVE.getCode());
+        cartDetailRepository.save(cartDetail);
+        log.info("Save new cart detail success");
+
+        cartWithoutLogin.setTotalPrice(cartDetail.getTotalPrice());
+        cartWithoutLogin.setVersionNo(cartWithoutLogin.getVersionNo() + 1);
+        cartRepository.save(cartWithoutLogin);
+        log.info("save update cart success");
+
+        CartRetrieveCreateDto cartRetrieveCreateDto = new CartRetrieveCreateDto();
+        cartRetrieveCreateDto.setToken(cartWithoutLogin.getToken());
+        cartRetrieveCreateDto.setTotalPrice(cartWithoutLogin.getTotalPrice());
+        cartRetrieveCreateDto.setVersionNo(cartWithoutLogin.getVersionNo());
+        log.info("Add new product to cart success");
+
+        return cartRetrieveCreateDto;
+    }
+
 //    /**
 //     * Sync cart after login
 //     *
@@ -192,28 +195,32 @@
 //
 //        // If old cart & current cart is not null
 //        if(oldCart != null && cartWithoutLogin != null) {
-//            for(CartDetail cartDetailWithoutLogin: cartWithoutLogin.getCartDetails()) {
-//                boolean IsMatch = false;
-//                for(CartDetail oldCartDetail: oldCart.getCartDetails()) {
-//                    if(cartDetailWithoutLogin.getProduct().getProductId().equals(oldCartDetail.getProduct().getProductId())) {
-//                        // Product id matches, update quantity
-//                        oldCartDetail.setQuantity(oldCartDetail.getQuantity() + cartDetailWithoutLogin.getQuantity());
-//                        oldCartDetail.setTotalPrice(oldCartDetail.getTotalPrice() + cartDetailWithoutLogin.getTotalPrice());
-//                        IsMatch = true;
-//                        log.info("Have same product - update quantity");
+//            for(CartDetail cartDetailWithoutLogin: cartDetailRepository.findAll()) {
+//                if(cartDetailWithoutLogin.getCart().equals(cartWithoutLogin)) {
+//                    boolean IsMatch = false;
+//                    for(CartDetail oldCartDetail: cartDetailRepository.findAll()) {
+//                        if(oldCartDetail.getCart().equals(oldCart)) {
+//                            if(cartDetailWithoutLogin.getProduct().getProductId().equals(oldCartDetail.getProduct().getProductId())) {
+//                                // Product id matches, update quantity
+//                                oldCartDetail.setQuantity(oldCartDetail.getQuantity() + cartDetailWithoutLogin.getQuantity());
+//                                oldCartDetail.setTotalPrice(oldCartDetail.getTotalPrice() + cartDetailWithoutLogin.getTotalPrice());
+//                                IsMatch = true;
+//                                log.info("Have same product - update quantity");
 //
-//                        totalQuantity += oldCartDetail.getQuantity();
-//                        totalPrice += oldCartDetail.getTotalPrice();
-//                        break;
+//                                totalQuantity += oldCartDetail.getQuantity();
+//                                totalPrice += oldCartDetail.getTotalPrice();
+//                                break;
+//                            }
+//                        }
 //                    }
-//                }
-//                if(!IsMatch) {
-//                    // Product id doesn't exist, create new cart detail
-//                    cartDetailWithoutLogin.setCart(oldCart);
-//                    oldCart.getCartDetails().add(cartDetailWithoutLogin);
-//                    log.info("Haven't same product - add new cartDetail inside old cart");
+//                    if(!IsMatch) {
+//                        // Product id doesn't exist, create new cart detail
+//                        cartDetailWithoutLogin.setCart(oldCart);
+//                        oldCart.getCartDetails().add(cartDetailWithoutLogin);
+//                        log.info("Haven't same product - add new cartDetail inside old cart");
 //
-//                    totalQuantity += cartDetailWithoutLogin.getQuantity();
+//                        totalQuantity += cartDetailWithoutLogin.getQuantity();
+//                    }
 //                }
 //            }
 //            // Update old cart in the database
@@ -579,4 +586,4 @@
 //        }
 //        return cartRetrieveSyncDto;
 //    }
-//}
+}

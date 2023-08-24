@@ -33,9 +33,6 @@ public class Product {
     @Column(name = "price", nullable = false)
     private Double price;
 
-    @Column(name = "is_like")
-    private Boolean isLike = false;
-
     @Column(name = "delete_flag")
     private int deleteFlag = 0;
 
@@ -50,11 +47,11 @@ public class Product {
     )
     private List<Category> categories;
 
-    @ManyToMany(cascade=CascadeType.ALL)
-    @JoinTable(
-            name="product_user",
-            joinColumns=@JoinColumn(name="product_id"),
-            inverseJoinColumns=@JoinColumn(name="user_id")
-    )
-    private List<User> users;
+//    @ManyToMany(cascade=CascadeType.ALL)
+//    @JoinTable(
+//            name="product_user",
+//            joinColumns=@JoinColumn(name="product_id"),
+//            inverseJoinColumns=@JoinColumn(name="user_id")
+//    )
+//    private List<User> users;
 }

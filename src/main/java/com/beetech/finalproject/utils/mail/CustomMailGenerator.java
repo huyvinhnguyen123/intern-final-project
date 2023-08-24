@@ -1,8 +1,6 @@
 package com.beetech.finalproject.utils.mail;
 
 
-import com.beetech.finalproject.web.dtos.email.ProductOrigin;
-
 public class CustomMailGenerator {
     private static final String EMAIL = "mailto:atifarlunar.official@gmail.com";
     private static final String TARGET="_blank";
@@ -20,7 +18,7 @@ public class CustomMailGenerator {
                 + "</body></html>";
     }
 
-    public static final String productWhistListMessage(ProductOrigin productOrigin, ProductOrigin productAfterUpdate) {
+    public static final String productWhistListMessage(String sku, String productName, Double price) {
         return  "<!DOCTYPE html>\n" +
                 "<html>\n" +
                 "<head>\n" +
@@ -59,15 +57,11 @@ public class CustomMailGenerator {
                 "<body>\n" +
                 "<div class=\"container\">\n" +
                 "    <h2>Dear User,</h2>\n" +
-                "    <p>We have important news about the product you liked. There have been changes in the product details:</p>\n" +
+                "    <p>We have important news about the product you liked. There have been changes in the product:</p>\n" +
                 "    <div class=\"change-details\">\n" +
-                "        <p><strong>Old sku:</strong> "+productOrigin.getSku()+" <Strong>Change to</Strong> <strong>New sku:</strong> "+productAfterUpdate.getSku()+"</p>\n" +
-                "        <p><strong>Old name:</strong> "+productOrigin.getProductName()+" <Strong>Change to</Strong> <strong>New name:</strong> "+productAfterUpdate.getProductName()+"</p>\n" +
-                "        <p><strong>Old price:</strong> "+productOrigin.getPrice()+" <Strong>Change to</Strong> <strong>New price:</strong> "+productAfterUpdate.getPrice()+"</p>\n" +
-                "        <p><strong>Old detail:</strong> "+productOrigin.getDetailInfo()+" <Strong>Change to</Strong> <strong>New detail:</strong> "+productAfterUpdate.getDetailInfo()+"</p>\n" +
-                "        <p><strong>Old category:</strong> "+productOrigin.getCategoryName()+" <Strong>Change to</Strong> <strong>New category:</strong> "+productAfterUpdate.getCategoryName()+"</p>\n" +
-                "        <p><strong>Old thumbnail:</strong> <img src="+productOrigin.getThumbnailImage()+" width=500 height=600> <Strong>Change to</Strong> <strong>New thumbnail:</strong> <img src="+productAfterUpdate.getThumbnailImage()+" width=500 height=600></p>\n" +
-                "        <p><strong>Old detail images:</strong> "+productOrigin.getDetailImages()+" <Strong>Change to</Strong> <strong>New price:</strong> "+productAfterUpdate.getDetailImages()+"</p>\n" +
+                "        <p><strong>New sku:</strong> "+sku+"</p>\n" +
+                "        <p><strong>New name:</strong> "+productName+"</p>\n" +
+                "        <p><strong>New price:</strong> "+price+"</p>\n" +
                 "    </div>\n" +
                 "    <p>If you have any questions, please don't hesitate to contact us at: <a href=\"mailto:atifarlunar.official@gmail.com\">atifarlunar.official@gmail.com</a></p>\n" +
                 "    <p>Thank you!</p>\n" +
