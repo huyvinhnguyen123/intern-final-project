@@ -127,22 +127,24 @@ public class AdminController {
                                                                       HttpServletResponse response) {
         log.info("request export statistic product");
 
+        String contentDisposition = "Content-Disposition";
+
         response.setContentType("text/csv");
 
         if(statisticInputDto.getTime().equals("today")){
-            response.setHeader("Content-Disposition", "attachment; filename=today-products.csv");
+            response.setHeader(contentDisposition, "attachment; filename=today-products.csv");
         }
 
         if(statisticInputDto.getTime().equals("week")){
-            response.setHeader("Content-Disposition", "attachment; filename=week-products.csv");
+            response.setHeader(contentDisposition, "attachment; filename=week-products.csv");
         }
 
         if(statisticInputDto.getTime().equals("month")){
-            response.setHeader("Content-Disposition", "attachment; filename=month-products.csv");
+            response.setHeader(contentDisposition, "attachment; filename=month-products.csv");
         }
 
         if(statisticInputDto.getTime().equals("year")){
-            response.setHeader("Content-Disposition", "attachment; filename=year-products.csv");
+            response.setHeader(contentDisposition, "attachment; filename=year-products.csv");
         }
 
         try {

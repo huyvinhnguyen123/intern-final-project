@@ -1,6 +1,7 @@
 package com.beetech.finalproject.domain.service;
 
 import com.beetech.finalproject.common.DeleteFlag;
+import com.beetech.finalproject.common.LogStatus;
 import com.beetech.finalproject.domain.entities.*;
 import com.beetech.finalproject.domain.entities.statistics.ProductStatistic;
 import com.beetech.finalproject.domain.repository.*;
@@ -86,19 +87,19 @@ public class ProductService {
         product.setCategories(categoryForProductList);
         product.setDeleteFlag(DeleteFlag.NON_DELETE.getCode());
         productRepository.save(product);
-        log.info("Save product success!");
+        log.info(LogStatus.createSuccess("product"));
 
         ImageForProduct imageForProduct = new ImageForProduct();
         imageForProduct.setPath(googleDriveService.uploadImageAndGetId(productCreateDto.getThumbnailImage(), productPath));
         imageForProduct.setName(productCreateDto.getThumbnailImage().getOriginalFilename());
         imageForProductRepository.save(imageForProduct);
-        log.info("Save image for product success");
+        log.info(LogStatus.createSuccess("image for product"));
 
         ProductImage productImage = new ProductImage();
         productImage.setProduct(product);
         productImage.setImageForProduct(imageForProduct);
         productImageRepository.save(productImage);
-        log.info("Save product image success");
+        log.info(LogStatus.createSuccess("product image"));
 
         List<MultipartFile> multipartImages = productCreateDto.getDetailImages();
         for(int i = 0; i < multipartImages.size(); i++) {
@@ -107,11 +108,26 @@ public class ProductService {
             detailImage.setName(productCreateDto.getDetailImages().get(i).getOriginalFilename());
             detailImage.setImageForProduct(imageForProduct);
             detailImageRepository.save(detailImage);
-            log.info("Save detail image success");
+            log.info(LogStatus.createSuccess("detail image"));
         }
-        log.info("Create product success");
-
         productStatisticService.createProductStatistic(product.getProductId());
+    }
+
+    /**
+     * get product by id
+     *
+     * @param productId - input productId
+     * @return - product
+     */
+    private Product getProductById(Long productId) {
+        Product existingProduct = productRepository.findById(productId).orElseThrow(
+                () -> {
+                    log.error(LogStatus.selectOneFail("product"));
+                    return new NullPointerException(LogStatus.searchOneFail("product") + productId);
+                }
+        );
+        log.info(LogStatus.selectOneSuccess("product"));
+        return existingProduct;
     }
 
     /**
@@ -121,13 +137,7 @@ public class ProductService {
      * @return - product
      */
     public ProductDetailDto findProductById(Long productId) {
-        Product existingProduct = productRepository.findById(productId).orElseThrow(
-                () -> {
-                    log.error("Not found this product");
-                    return new NullPointerException("Not found this product: " + productId);
-                }
-        );
-        log.info("Found product");
+        Product existingProduct = getProductById(productId);
         productStatisticService.updateProductViewStatistic(existingProduct.getProductId());
 
         ProductDetailDto productDetailDto = new ProductDetailDto();
@@ -150,11 +160,11 @@ public class ProductService {
 
         ProductStatistic existingProductStatistic = productStatisticRepository.findByProductId(productId).orElseThrow(
                 () -> {
-                    log.error("Not found this product");
-                    return new NullPointerException("Not found this statistic: " + productId);
+                    log.error(LogStatus.selectOneFail("product statistic"));
+                    return new NullPointerException(LogStatus.searchOneFail("product statistic") + productId);
                 }
         );
-        log.info("Found this statistic");
+        log.info(LogStatus.selectOneSuccess("product statistic"));
 
         productDetailDto.setViewsCount(existingProductStatistic.getViewCount());
         productDetailDto.setLikesCount(existingProductStatistic.getLikeCount());
@@ -202,7 +212,7 @@ public class ProductService {
             return productRetrieveDto;
         });
     }
-
+// ==========================================================================================================
     /**
      * delete product
      *
@@ -210,43 +220,45 @@ public class ProductService {
      */
     @Transactional
     public void deleteProduct(Long productId) throws GeneralSecurityException, IOException {
-        Product existingProduct = productRepository.findById(productId).orElseThrow(
-                () -> {
-                    log.error("Not found this product");
-                    return new NullPointerException("Not found this product: " + productId);
-                }
-        );
-        log.info("Found product");
+        Product existingProduct = getProductById(productId);
 
         existingProduct.setOldSku(existingProduct.getSku());
         existingProduct.setSku(null);
         existingProduct.setDeleteFlag(DeleteFlag.DELETED.getCode());
         productRepository.save(existingProduct);
-        log.info("Update product success");
+        log.info(LogStatus.updateSuccess("product"));
 
-        for(ProductImage productImage: productImageRepository.findAll()) {
-            if(productImage.getProduct().equals(existingProduct)) {
-                googleDriveService.deleteImageFromDrive(productImage.getImageForProduct().getPath());
-                log.info("Delete file success!");
-                for(ImageForProduct imageForProduct: imageForProductRepository.findAll()) {
-                    if(imageForProduct.equals(productImage.getImageForProduct())) {
-                        for(DetailImage detailImage: detailImageRepository.findAll()) {
-                            if(detailImage.getImageForProduct().equals(imageForProduct)) {
-                                googleDriveService.deleteImageFromDrive(detailImage.getPath());
-                                detailImageRepository.deleteById(detailImage.getDetailImageId());
-                                log.info("Delete detail image success");
-                            }
+        deleteProductImageAndImageForProduct(existingProduct);
+    }
+
+    private void deleteProductImageAndImageForProduct(Product existingProduct) throws GeneralSecurityException, IOException {
+        for (ProductImage productImage : productImageRepository.findAll()) {
+            deleteDetailImage(productImage, existingProduct);
+            productImageRepository.deleteById(productImage.getProductImageId());
+            log.info(LogStatus.deleteSuccess("product image"));
+            imageForProductRepository.deleteById(productImage.getImageForProduct().getImageProductId());
+            log.info(LogStatus.deleteSuccess("image for product"));
+        }
+    }
+
+    private void deleteDetailImage(ProductImage productImage, Product existingProduct) throws GeneralSecurityException, IOException {
+        if (productImage.getProduct().equals(existingProduct)) {
+            googleDriveService.deleteImageFromDrive(productImage.getImageForProduct().getPath());
+            log.info(LogStatus.deleteSuccess("file"));
+            for (ImageForProduct imageForProduct : imageForProductRepository.findAll()) {
+                if (imageForProduct.equals(productImage.getImageForProduct())) {
+                    for (DetailImage detailImage : detailImageRepository.findAll()) {
+                        if (detailImage.getImageForProduct().equals(imageForProduct)) {
+                            googleDriveService.deleteImageFromDrive(detailImage.getPath());
+                            detailImageRepository.deleteById(detailImage.getDetailImageId());
+                            log.info(LogStatus.deleteSuccess("detail image"));
                         }
                     }
                 }
             }
-            productImageRepository.deleteById(productImage.getProductImageId());
-            log.info("Delete product image success");
-            imageForProductRepository.deleteById(productImage.getImageForProduct().getImageProductId());
-            log.info("Delete image for product success");
         }
     }
-
+// ==========================================================================================================
     /**
      * search products with detail information
      *
@@ -294,7 +306,7 @@ public class ProductService {
 
         return productRetrieveSearchDetailDtos;
     }
-
+// ==========================================================================================================
     /**
      * update product
      *
@@ -303,88 +315,20 @@ public class ProductService {
      */
     @Transactional
     public void updateProduct(Long productId, ProductCreateDto productCreateDto) throws GeneralSecurityException, IOException {
-        Product existingProduct = productRepository.findById(productId).orElseThrow(
-                ()->{
-                    log.error("Not found this product");
-                    return new NullPointerException("Not found this product: " + productId);
-                }
-        );
-        log.info("Found product");
+        Product existingProduct = getProductById(productId);
 
         existingProduct.setSku(productCreateDto.getSku());
         existingProduct.setProductName(productCreateDto.getProductName());
         existingProduct.setDetailInfo(productCreateDto.getDetailInfo());
         existingProduct.setPrice(productCreateDto.getPrice());
 
-        List<Category> categoryForProductList = new ArrayList<>();
-        List<Category> categories = categoryRepository.findAll();
-        for(Category c: categories) {
-            if(c.getCategoryId().equals(productCreateDto.getCategoryId())) {
-                categoryForProductList.add(c);
-            }
-        }
-
+        List<Category> categoryForProductList = getListCategoryForProduct(productCreateDto);
         existingProduct.setCategories(categoryForProductList);
         productRepository.save(existingProduct);
-        log.info("Update product success");
+        log.info(LogStatus.updateSuccess("product"));
 
-        for(ProductImage productImage: productImageRepository.findAll()) {
-            if(!productImage.getProduct().equals(existingProduct)) {
-                ImageForProduct imageForProduct = new ImageForProduct();
-                imageForProduct.setPath(googleDriveService.uploadImageAndGetId(productCreateDto.getThumbnailImage(), productPath));
-                imageForProduct.setName(productCreateDto.getThumbnailImage().getOriginalFilename());
-                imageForProductRepository.save(imageForProduct);
-                log.info("Save image for product success");
-
-                ProductImage newProductImage = new ProductImage();
-                newProductImage.setProduct(existingProduct);
-                newProductImage.setImageForProduct(imageForProduct);
-                productImageRepository.save(newProductImage);
-                log.info("Save product image success");
-
-                List<MultipartFile> multipartImages = productCreateDto.getDetailImages();
-                for(int i = 0; i < multipartImages.size(); i++) {
-                    DetailImage detailImage = new DetailImage();
-                    detailImage.setPath(googleDriveService.uploadImageAndGetId(productCreateDto.getDetailImages().get(i), detailImagesPath));
-                    detailImage.setName(productCreateDto.getDetailImages().get(i).getOriginalFilename());
-                    detailImage.setImageForProduct(imageForProduct);
-                    detailImageRepository.save(detailImage);
-                    log.info("Save detail image success");
-                }
-            } else {
-                googleDriveService.deleteImageFromDrive(productImage.getImageForProduct().getPath());
-                log.info("Delete file success!");
-                for(ImageForProduct imageForProduct: imageForProductRepository.findAll()) {
-                    if(imageForProduct.equals(productImage.getImageForProduct())) {
-                        for(DetailImage detailImage: detailImageRepository.findAll()) {
-                            if(detailImage.getImageForProduct().equals(imageForProduct)) {
-                                googleDriveService.deleteImageFromDrive(detailImage.getPath());
-                                detailImageRepository.deleteById(detailImage.getDetailImageId());
-                                log.info("Delete detail image success");
-                            }
-                        }
-                    }
-                }
-
-                ImageForProduct imageForProduct = productImage.getImageForProduct();
-                imageForProduct.setPath(googleDriveService.uploadImageAndGetId(productCreateDto.getThumbnailImage(), productPath));
-                imageForProduct.setName(productCreateDto.getThumbnailImage().getOriginalFilename());
-                imageForProductRepository.save(imageForProduct);
-                log.info("Save image for product success");
-
-                List<MultipartFile> multipartImages = productCreateDto.getDetailImages();
-                for(int i = 0; i < multipartImages.size(); i++) {
-                    DetailImage detailImage = new DetailImage();
-                    detailImage.setPath(googleDriveService.uploadImageAndGetId(productCreateDto.getDetailImages().get(i), detailImagesPath));
-                    detailImage.setName(productCreateDto.getDetailImages().get(i).getOriginalFilename());
-                    detailImage.setImageForProduct(imageForProduct);
-                    detailImageRepository.save(detailImage);
-                    log.info("Save detail image success");
-                }
-
-            }
-        }
-        log.info("Update product success");
+        updateProductImageAndImageForProduct(existingProduct, productCreateDto);
+        log.info(LogStatus.updateSuccess("product"));
 
         for(ProductUser productUser: productUserRepository.findAll()) {
             if(productUser.getProduct().equals(existingProduct)) {
@@ -408,6 +352,82 @@ public class ProductService {
         log.info("Update product & send mail for updating product success");
     }
 
+    private List<Category> getListCategoryForProduct(ProductCreateDto productCreateDto) {
+        List<Category> categoryForProductList = new ArrayList<>();
+        List<Category> categories = categoryRepository.findAll();
+        for(Category category: categories) {
+            if(category.getCategoryId().equals(productCreateDto.getCategoryId())) {
+                categoryForProductList.add(category);
+            }
+        }
+        return categoryForProductList;
+    }
+
+    private void updateNewImage(Product existingProduct, ProductCreateDto productCreateDto) throws GeneralSecurityException, IOException {
+        ImageForProduct imageForProduct = new ImageForProduct();
+        imageForProduct.setPath(googleDriveService.uploadImageAndGetId(productCreateDto.getThumbnailImage(), productPath));
+        imageForProduct.setName(productCreateDto.getThumbnailImage().getOriginalFilename());
+        imageForProductRepository.save(imageForProduct);
+        log.info(LogStatus.createSuccess("image for product"));
+
+        ProductImage newProductImage = new ProductImage();
+        newProductImage.setProduct(existingProduct);
+        newProductImage.setImageForProduct(imageForProduct);
+        productImageRepository.save(newProductImage);
+        log.info(LogStatus.createSuccess("product image"));
+
+        List<MultipartFile> multipartImages = productCreateDto.getDetailImages();
+        for (int i = 0; i < multipartImages.size(); i++) {
+            DetailImage detailImage = new DetailImage();
+            detailImage.setPath(googleDriveService.uploadImageAndGetId(productCreateDto.getDetailImages().get(i), detailImagesPath));
+            detailImage.setName(productCreateDto.getDetailImages().get(i).getOriginalFilename());
+            detailImage.setImageForProduct(imageForProduct);
+            detailImageRepository.save(detailImage);
+            log.info(LogStatus.createSuccess("detail image"));
+        }
+    }
+
+    private void deleteExistingImage(ProductImage productImage) throws GeneralSecurityException, IOException {
+        googleDriveService.deleteImageFromDrive(productImage.getImageForProduct().getPath());
+        log.info(LogStatus.deleteSuccess("file"));
+        for(ImageForProduct imageForProduct: imageForProductRepository.findAll()) {
+            if(imageForProduct.equals(productImage.getImageForProduct())) {
+                for(DetailImage detailImage: detailImageRepository.findAll()) {
+                    if(detailImage.getImageForProduct().equals(imageForProduct)) {
+                        googleDriveService.deleteImageFromDrive(detailImage.getPath());
+                        detailImageRepository.deleteById(detailImage.getDetailImageId());
+                        log.info(LogStatus.deleteSuccess("detail image"));
+                    }
+                }
+            }
+        }
+    }
+
+    private void updateProductImageAndImageForProduct(Product existingProduct, ProductCreateDto productCreateDto) throws GeneralSecurityException, IOException {
+        for(ProductImage productImage: productImageRepository.findAll()) {
+            if(!productImage.getProduct().equals(existingProduct)) {
+                updateNewImage(existingProduct, productCreateDto);
+            } else {
+                deleteExistingImage(productImage);
+                ImageForProduct imageForProduct = productImage.getImageForProduct();
+                imageForProduct.setPath(googleDriveService.uploadImageAndGetId(productCreateDto.getThumbnailImage(), productPath));
+                imageForProduct.setName(productCreateDto.getThumbnailImage().getOriginalFilename());
+                imageForProductRepository.save(imageForProduct);
+                log.info("Save image for product success");
+
+                List<MultipartFile> multipartImages = productCreateDto.getDetailImages();
+                for(int i = 0; i < multipartImages.size(); i++) {
+                    DetailImage detailImage = new DetailImage();
+                    detailImage.setPath(googleDriveService.uploadImageAndGetId(productCreateDto.getDetailImages().get(i), detailImagesPath));
+                    detailImage.setName(productCreateDto.getDetailImages().get(i).getOriginalFilename());
+                    detailImage.setImageForProduct(imageForProduct);
+                    detailImageRepository.save(detailImage);
+                    log.info("Save detail image success");
+                }
+            }
+        }
+    }
+// ==========================================================================================================
     /**
      * Get product's image
      *
@@ -418,12 +438,12 @@ public class ProductService {
     public String getProductImage(Long productId) throws GeneralSecurityException, IOException {
         String fileId = "";
         Product existingProduct = productRepository.findById(productId).orElseThrow(
-                () -> {
-                    log.error("Not found this product");
-                    return new NullPointerException("Not found this product: " + productId);
+                ()->{
+                    log.error(LogStatus.selectOneFail("product"));
+                    return new NullPointerException(LogStatus.searchOneFail("product") + productId);
                 }
         );
-        log.info("Found this product");
+        log.info(LogStatus.selectOneSuccess("product"));
 
         for(ProductImage productImage: productImageRepository.findAll()) {
             if(productImage.getProduct().equals(existingProduct)) {
@@ -433,7 +453,7 @@ public class ProductService {
         }
         return fileId;
     }
-
+// ==========================================================================================================
     /**
      * Get product detail image
      *
@@ -443,33 +463,24 @@ public class ProductService {
      */
     public String getProductDetailImage(Long productId, String path) throws GeneralSecurityException, IOException {
         String fileId = "";
-        Product existingProduct = productRepository.findById(productId).orElseThrow(
-                () -> {
-                    log.error("Not found this product");
-                    return new NullPointerException("Not found this product: " + productId);
-                }
-        );
-        log.info("Found this product");
+        Product existingProduct = getProductById(productId);
+        fileId = getFileIdFromDrive(existingProduct, path, fileId);
+        return fileId;
+    }
 
-        for(ProductImage productImage: productImageRepository.findAll()) {
-            if(productImage.getProduct().equals(existingProduct)) {
-                for(ImageForProduct imageForProduct: imageForProductRepository.findAll()) {
-                    if(imageForProduct.equals(productImage.getImageForProduct())) {
-                        for(DetailImage detailImage: detailImageRepository.findAll()) {
-                            if(detailImage.getImageForProduct().equals(imageForProduct)) {
-                                if(detailImage.getPath().equals(path)) {
-                                    fileId = productImage.getImageForProduct().getPath();
-                                    log.info("Get file success");
-                                }
-                            }
-                        }
-                    }
+    private String getFileIdFromDrive(Product existingProduct, String path, String fileId) {
+        for (ProductImage productImage : productImageRepository.findProductImagesByProduct(existingProduct)) {
+            ImageForProduct imageForProduct = productImage.getImageForProduct();
+            for (DetailImage detailImage : detailImageRepository.findAll()) {
+                if(detailImage.getImageForProduct().equals(imageForProduct) && (detailImage.getPath().equals(path))) {
+                    fileId = productImage.getImageForProduct().getPath();
+                    log.info("Get file success");
                 }
             }
         }
         return fileId;
     }
-
+// ==========================================================================================================
     /**
      * like product by user
      *
@@ -478,18 +489,11 @@ public class ProductService {
      */
     @Transactional
     public void likeProduct(Long productId, User user) {
-        Product existingProduct = productRepository.findById(productId).orElseThrow(
-                () -> {
-                    log.error("Not found this product");
-                    return new NullPointerException("Not found this product: " + productId);
-                }
-        );
-        log.info("Found this product");
-
+        Product existingProduct = getProductById(productId);
         ProductUser existingProductUser = productUserRepository.findByProductAndUser(existingProduct, user);
         if (existingProductUser != null) {
             // User has already interacted with the product, handle accordingly
-            if (!existingProductUser.getIsLike()) {
+            if (Boolean.FALSE.equals(existingProductUser.getIsLike())) {
                 existingProductUser.setIsLike(true);
                 productUserRepository.save(existingProductUser);
                 productStatisticService.updateProductLikeStatistic(productId);
@@ -517,22 +521,14 @@ public class ProductService {
      */
     @Transactional
     public void dislikeProduct(Long productId, User user) {
-        Product existingProduct = productRepository.findById(productId).orElseThrow(
-                () -> {
-                    log.error("Not found this product");
-                    return new NullPointerException("Not found this product: " + productId);
-                }
-        );
-        log.info("Found this product");
-
+        Product existingProduct = getProductById(productId);
         ProductUser existingProductUser = productUserRepository.findByProductAndUser(existingProduct, user);
         if (existingProductUser != null) {
             // User has already interacted with the product, handle accordingly
-            if (existingProductUser.getIsLike()) {
+            if (Boolean.TRUE.equals(existingProductUser.getIsLike())) {
                 existingProductUser.setIsLike(false);
                 productUserRepository.save(existingProductUser);
                 productStatisticService.updateProductDisLikeStatistic(productId);
-                productStatisticService.UpdateProductUnlikeStatistic(productId);
                 log.info("Updated product user, set dislike success");
             } else {
                 log.info("user has been disliked this product");

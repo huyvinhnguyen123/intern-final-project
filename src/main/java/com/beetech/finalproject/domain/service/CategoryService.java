@@ -1,5 +1,6 @@
 package com.beetech.finalproject.domain.service;
 
+import com.beetech.finalproject.common.LogStatus;
 import com.beetech.finalproject.domain.entities.Category;
 import com.beetech.finalproject.domain.entities.CategoryImage;
 import com.beetech.finalproject.domain.entities.ImageForCategory;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 @Service
@@ -47,21 +49,19 @@ public class CategoryService {
         Category category = new Category();
         category.setCategoryName(categoryCreateDto.getCategoryName());
         categoryRepository.save(category);
-        log.info("Save new category success!");
+        log.info(LogStatus.createSuccess("category"));
 
         ImageForCategory imageForCategory = new ImageForCategory();
         imageForCategory.setPath(googleDriveService.uploadImageAndGetId(categoryCreateDto.getImage(), categoryPath));
         imageForCategory.setName(categoryCreateDto.getImage().getOriginalFilename());
         imageForCategoryRepository.save(imageForCategory);
-        log.info("Save new image for category success!");
+        log.info(LogStatus.createSuccess("image for category"));
 
         CategoryImage categoryImage = new CategoryImage();
         categoryImage.setCategory(category);
         categoryImage.setImageForCategory(imageForCategory);
         categoryImageRepository.save(categoryImage);
-        log.info("Save new category and image success!");
-
-        log.info("Create category success!");
+        log.info(LogStatus.createSuccess("category image"));
     }
 
     /**
@@ -69,7 +69,7 @@ public class CategoryService {
      *
      * @return - list categories
      */
-    public Iterable<CategoryRetrieveDto> DisplayCategories() {
+    public Iterable<CategoryRetrieveDto> displayCategories() {
         List<CategoryRetrieveDto> categoryRetrieveDtoList = new ArrayList<>();
 
         List<CategoryImage> categoryImages = categoryImageRepository.findAll();
@@ -105,8 +105,7 @@ public class CategoryService {
             categoryRetrieveDto.setImages(imageRetrieveDtoList);
 
             categoryRetrieveDtoList.add(categoryRetrieveDto);
-            log.info("Get categories success");
-            log.info("Display categories success");
+            log.info(LogStatus.selectAllSuccess("categories"));
         }
         return categoryRetrieveDtoList;
     }
@@ -121,11 +120,11 @@ public class CategoryService {
     public void updateCategory(Long categoryId, CategoryUpdateDto categoryUpdateDto) throws GeneralSecurityException, IOException {
         Category existingCategory = categoryRepository.findById(categoryId).orElseThrow(
                 () -> {
-                    log.error("Not found this category");
-                    return new NullPointerException("Not found this category: " + categoryId);
+                    log.error(LogStatus.selectOneFail("category"));
+                    return new NullPointerException(LogStatus.searchOneFail("category") + categoryId);
                 }
         );
-        log.info("Found this category");
+        log.info(LogStatus.selectOneSuccess("category"));
 
         existingCategory.setCategoryName(categoryUpdateDto.getCategoryName());
         categoryRepository.save(existingCategory);
@@ -137,11 +136,11 @@ public class CategoryService {
                 // check if categoryId in categoryImage is same as categoryId in existingCategory
                 if(categoryImage.getCategory().getCategoryId().equals(existingCategory.getCategoryId())) {
                     googleDriveService.deleteImageFromDrive(categoryImage.getImageForCategory().getPath());
-                    log.info("Delete file success!");
+                    log.info(LogStatus.deleteSuccess("drive file"));
                     categoryImageRepository.deleteById(categoryImage.getCategoryImageId());
-                    log.info("Delete category image success!");
+                    log.info(LogStatus.deleteSuccess("category image"));
                     imageForCategoryRepository.deleteById(categoryImage.getImageForCategory().getImageId());
-                    log.info("Delete image for category success!");
+                    log.info(LogStatus.deleteSuccess("image for category"));
                 }
             }
 
@@ -149,15 +148,15 @@ public class CategoryService {
             imageForCategory.setPath(googleDriveService.uploadImageAndGetId(categoryUpdateDto.getImage(), categoryPath));
             imageForCategory.setName(categoryUpdateDto.getImage().getOriginalFilename());
             imageForCategoryRepository.save(imageForCategory);
-            log.info("Save new image for category success!");
+            log.info(LogStatus.createSuccess("image for category"));
 
             CategoryImage categoryImage = new CategoryImage();
             categoryImage.setCategory(existingCategory);
             categoryImage.setImageForCategory(imageForCategory);
             categoryImageRepository.save(categoryImage);
-            log.info("Save new category and image success!");
+            log.info(LogStatus.createSuccess("category image"));
         }
-        log.info("Update category success!");
+        log.info(LogStatus.updateSuccess("category"));
     }
 
     /**
@@ -166,36 +165,34 @@ public class CategoryService {
      * @param categoryId - input categoryId
      */
     @Transactional
-    public void deleteCategory(Long categoryId) throws GeneralSecurityException, IOException {
+    public void deleteCategory(Long categoryId) throws RuntimeException, GeneralSecurityException, IOException {
         Category existingCategory = categoryRepository.findById(categoryId).orElseThrow(
                 () -> {
-                    log.error("Not found this category");
-                    return new NullPointerException("Not found this category: " + categoryId);
+                    log.error(LogStatus.selectOneFail("category"));
+                    return new NullPointerException(LogStatus.searchOneFail("category") + categoryId);
                 }
         );
-        log.info("Found this category");
+        log.info(LogStatus.selectOneSuccess("category"));
 
         for(Product product: productRepository.findAll()) {
             for(Category category: product.getCategories()) {
-                if(category.equals(existingCategory)) {
-                    if(product.getProductId() != null ) {
-                        log.error("The category is still relation with product");
-                        throw new RuntimeException("The category still relation with product");
-                    }
+                if(category.equals(existingCategory) && product.getProductId() != null ) {
+                    log.error("The category is still relation with product");
                 }
             }
         }
 
+
         for(CategoryImage categoryImage: categoryImageRepository.findAll()) {
             if(categoryImage.getCategory().equals(existingCategory)) {
                 googleDriveService.deleteImageFromDrive(categoryImage.getImageForCategory().getPath());
-                log.info("Delete file success!");
+                log.info(LogStatus.deleteSuccess("drive file"));
                 categoryImageRepository.deleteById(categoryImage.getCategoryImageId());
-                log.info("Delete category image success!");
+                log.info(LogStatus.deleteSuccess("category image"));
                 imageForCategoryRepository.deleteById(categoryImage.getImageForCategory().getImageId());
-                log.info("Delete image for category success!");
+                log.info(LogStatus.deleteSuccess("image for category"));
                 categoryRepository.deleteById(categoryId);
-                log.info("delete category success");
+                log.info(LogStatus.deleteSuccess("category"));
             }
         }
     }

@@ -1,7 +1,6 @@
 package com.beetech.finalproject.domain.service.statistic;
 
 import com.beetech.finalproject.domain.entities.statistics.CartStatistic;
-import com.beetech.finalproject.domain.repository.CartRepository;
 import com.beetech.finalproject.domain.repository.CartStatisticRepository;
 import com.beetech.finalproject.utils.CustomDateTimeFormatter;
 import lombok.RequiredArgsConstructor;
@@ -16,9 +15,8 @@ import java.time.ZoneId;
 @RequiredArgsConstructor
 public class CartStatisticService {
     private final CartStatisticRepository cartStatisticRepository;
-    private final CartRepository cartRepository;
 
-    private final static long DEFAULT_VALUE = 0;
+    private static final long DEFAULT_VALUE = 0;
 
     /**
      * create cart statistic with number of add to cart

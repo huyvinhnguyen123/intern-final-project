@@ -9,6 +9,6 @@ public class DuplicateException extends RuntimeException{
     }
 
     public String getStatusCode() {
-        return this.errorStatus.toString().toLowerCase();
+        return this.errorStatus.toLowerCase();
     }
 }

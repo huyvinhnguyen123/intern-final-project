@@ -1,6 +1,7 @@
 package com.beetech.finalproject.domain.service;
 
 import com.beetech.finalproject.common.AccountException;
+import com.beetech.finalproject.common.LogStatus;
 import com.beetech.finalproject.domain.entities.User;
 import com.beetech.finalproject.domain.repository.UserRepository;
 import com.beetech.finalproject.utils.CustomDateTimeFormatter;
@@ -20,15 +21,13 @@ public class AdminService {
     /**
      * valid loginId
      *
-     * @param loginId
+     * @param loginId - input loginId
      */
     public void validLoginId(String loginId) {
         User existingUser = userRepository.findByLoginId(loginId);
-        if (existingUser != null) {
-            if (!existingUser.isAccountNonLocked()) {
-                log.error("This user is already locked: {}", loginId);
-                throw new AccountException(AccountException.ErrorStatus.LOCKED_ACCOUNT, "The user is already locked.");
-            }
+        if (existingUser != null && !existingUser.isAccountNonLocked()) {
+            log.error("This user is already locked: {}", loginId);
+            throw new AccountException(AccountException.ErrorStatus.LOCKED_ACCOUNT, "The user is already locked.");
         }
     }
 
@@ -41,11 +40,11 @@ public class AdminService {
     public UserDetailDto findAndDisplayUserDetailById(String userId) {
         User existingUser = userRepository.findById(userId).orElseThrow(
                 ()->{
-                    log.error("Not found user");
-                    return new NullPointerException("Not found user: " + userId);
+                    log.error(LogStatus.selectOneFail("user"));
+                    return new NullPointerException(LogStatus.selectOneFail("user") + userId);
                 }
         );
-        log.info("Found user");
+        log.info(LogStatus.selectOneSuccess("user"));
 
         UserDetailDto userDetailDto = new UserDetailDto();
         userDetailDto.setUserId(existingUser.getUserId());
@@ -64,10 +63,10 @@ public class AdminService {
     public UserDetailDto updateUser(UserCreateDto userCreateDto) {
         User existingUser = userRepository.findByLoginId(userCreateDto.getLoginId());
         if(existingUser == null) {
-            log.error("Not found user");
-            throw new NullPointerException("Not found user: "  + userCreateDto.getLoginId());
+            log.error(LogStatus.selectOneFail("user"));
+            throw new NullPointerException(LogStatus.searchOneFail("user") + userCreateDto.getLoginId());
         }
-        log.info("Found user");
+        log.info(LogStatus.selectOneSuccess("user"));
 
         validLoginId(existingUser.getLoginId());
 
@@ -76,7 +75,7 @@ public class AdminService {
         existingUser.setUsername(userCreateDto.getUsername());
         existingUser.setBirthDay(CustomDateTimeFormatter.dateOfBirthFormatter(userCreateDto.getBirthDay()));
         userRepository.save(existingUser);
-        log.info("Update user success");
+        log.info(LogStatus.updateSuccess("user"));
 
         UserDetailDto userDetailDto = new UserDetailDto();
         userDetailDto.setUserId(existingUser.getUserId());
@@ -95,11 +94,11 @@ public class AdminService {
     public UserDetailDto deleteUser(String userId) {
         User existingUser = userRepository.findById(userId).orElseThrow(
                 ()->{
-                    log.error("Not found user");
-                    return new NullPointerException("Not found user: " + userId);
+                    log.error(LogStatus.selectOneFail("user"));
+                    return new NullPointerException(LogStatus.selectOneFail("user") + userId);
                 }
         );
-        log.info("Found user");
+        log.info(LogStatus.selectOneSuccess("user"));
 
         existingUser.setDeleteFlag(9);
         existingUser.setOldLoginId(existingUser.getLoginId());

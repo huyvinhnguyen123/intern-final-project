@@ -25,11 +25,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
     private final JwtFilter jwtFilter;
+    private static final String ADMIN = "ADMIN";
+    private static final String USER = "USER";
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable) // disable csrf when connect with browser
-                .authorizeHttpRequests((requests) -> requests // allow for public api: login api, homepage api, blog api, register api
+                .authorizeHttpRequests(requests -> requests // allow for public api: login api, homepage api, blog api, register api
                         // for all request url inside this app
                         // for permitAll() any user, guest or customer can access this url
                         .requestMatchers("/").permitAll()
@@ -45,24 +48,24 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/delete-cart").permitAll()
                         .requestMatchers("/api/v1/products/product").permitAll()
                 )
-                .authorizeHttpRequests((requests) -> requests // allow for login authentication & for ROLE_USER and ROLE_ADMIN
+                .authorizeHttpRequests(requests -> requests // allow for login authentication & for ROLE_USER and ROLE_ADMIN
                         // for all request in this url has role admin & user will be access
-                        .requestMatchers("/api/v1/users/**").hasAnyRole("USER", "ADMIN") // prepare for prefix ROLE_
+                        .requestMatchers("/api/v1/users/**").hasAnyRole(USER, ADMIN) // prepare for prefix ROLE_
                 )
-                .authorizeHttpRequests((requests) -> requests // allow for login authentication & for specific ROLE_
+                .authorizeHttpRequests(requests -> requests // allow for login authentication & for specific ROLE_
                         // for all request in this url has role admin will be access
                         // prepare for prefix ROLE_
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/add-category").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/delete-category").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/create-product").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/delete-product").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/update-product").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/create-order").hasRole("USER")
-                        .requestMatchers("/api/v1/import").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/admin/**").hasRole(ADMIN)
+                        .requestMatchers("/api/v1/add-category").hasRole(ADMIN)
+                        .requestMatchers("/api/v1/delete-category").hasRole(ADMIN)
+                        .requestMatchers("/api/v1/create-product").hasRole(ADMIN)
+                        .requestMatchers("/api/v1/delete-product").hasRole(ADMIN)
+                        .requestMatchers("/api/v1/update-product").hasRole(ADMIN)
+                        .requestMatchers("/api/v1/create-order").hasRole(ADMIN)
+                        .requestMatchers("/api/v1/import").hasRole(ADMIN)
                 )
                 // For all others url need to be authenticated
-                .authorizeHttpRequests((requests) -> requests.anyRequest().authenticated())
+                .authorizeHttpRequests(requests -> requests.anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // create session
                 .authenticationProvider(authenticationProvider()) // provide username and password for authentication
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class); // filter username and password with jwt token

@@ -1,8 +1,10 @@
 package com.beetech.finalproject.web.dtos.city;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class CityDto {
     private Long cityId;
     private String cityName;

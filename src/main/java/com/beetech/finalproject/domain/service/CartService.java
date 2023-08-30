@@ -38,8 +38,6 @@ public class CartService {
         cart.setToken(CustomGenerate.generateRandomString(20));
         cartRepository.save(cart);
         log.info("Save new cart success");
-
-        cartStatisticService.createCartStatistic(cart.getCartId());
         return cart;
     }
 

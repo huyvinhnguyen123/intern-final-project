@@ -37,7 +37,7 @@ import java.util.UUID;
 @RequestMapping("api/v1/auth")
 public class AuthenticationController {
     private final AuthenticationManager authenticationManager;
-    private final JwtUtils JwtUtils;
+    private final JwtUtils jwtUtils;
     private final UserService userService;
 
     @Value("${ValidInput}")
@@ -101,7 +101,7 @@ public class AuthenticationController {
                 throw new AuthException(AuthException.ErrorStatus.USER_DO_NOT_HAVE_PERMISSION);
             }
 
-            String token = JwtUtils.createToken(user);
+            String token = jwtUtils.createToken(user);
             log.info("Create token success: {}", token);
             String refreshToken = UUID.randomUUID().toString();
             log.info("Create refresh token success: {}", refreshToken);

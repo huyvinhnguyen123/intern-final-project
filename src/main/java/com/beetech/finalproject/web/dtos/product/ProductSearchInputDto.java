@@ -1,9 +1,10 @@
 package com.beetech.finalproject.web.dtos.product;
 
-import lombok.Data;
-import org.springframework.data.domain.Pageable;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class ProductSearchInputDto {
     private Long categoryId;
     private String sku;

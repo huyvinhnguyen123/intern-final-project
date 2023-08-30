@@ -1,5 +1,6 @@
 package com.beetech.finalproject.domain.service.statistic;
 
+import com.beetech.finalproject.common.LogStatus;
 import com.beetech.finalproject.domain.entities.Product;
 import com.beetech.finalproject.domain.entities.statistics.ProductStatistic;
 import com.beetech.finalproject.domain.repository.ProductRepository;
@@ -22,7 +23,7 @@ public class ProductStatisticService {
     private final ProductStatisticRepository productStatisticRepository;
     private final ProductRepository productRepository;
 
-    private final static long DEFAULT_VALUE = 0;
+    private static final long DEFAULT_VALUE = 0;
 
     /**
      * create product statistic with views and likes
@@ -39,23 +40,6 @@ public class ProductStatisticService {
 
         productStatisticRepository.save(productStatistic);
         log.info("Create product statistic success");
-    }
-
-    /**
-     * find product by id
-     *
-     * @param productId - input productId
-     * @return - product
-     */
-    public Product findProduct(Long productId) {
-        Product existingProduct = productRepository.findById(productId).orElseThrow(
-                () -> {
-                    log.error("Not found this product");
-                    return new NullPointerException("Not found this product: " + productId);
-                }
-        );
-        log.info("Found product");
-        return existingProduct;
     }
 
     /**
@@ -100,7 +84,7 @@ public class ProductStatisticService {
         existingProductStatistic.setStatisticDate(CustomDateTimeFormatter.getLocalDate());
         existingProductStatistic.setLastModifiedDate(Instant.now().atZone(ZoneId.systemDefault()));
         productStatisticRepository.save(existingProductStatistic);
-        log.info("Update product statistic with like success");
+        log.info(LogStatus.updateSuccess("product with like"));
     }
 
     /**
@@ -114,35 +98,7 @@ public class ProductStatisticService {
         existingProductStatistic.setStatisticDate(CustomDateTimeFormatter.getLocalDate());
         existingProductStatistic.setLastModifiedDate(Instant.now().atZone(ZoneId.systemDefault()));
         productStatisticRepository.save(existingProductStatistic);
-        log.info("Update product statistic with dislike success");
-    }
-
-    /**
-     * update product statistic with unlike
-     *
-     * @param productId - input productStatisticId
-     */
-    public void UpdateProductUnlikeStatistic(Long productId) {
-        ProductStatistic existingProductStatistic = findProductStatistic(productId);
-        existingProductStatistic.setLikeCount(existingProductStatistic.getLikeCount() - 1);
-        existingProductStatistic.setStatisticDate(CustomDateTimeFormatter.getLocalDate());
-        existingProductStatistic.setLastModifiedDate(Instant.now().atZone(ZoneId.systemDefault()));
-        productStatisticRepository.save(existingProductStatistic);
-        log.info("Update product statistic with like success");
-    }
-
-    /**
-     * update product statistic with unDislike
-     *
-     * @param productId - input productStatisticId
-     */
-    public void UpdateProductUnDislikeStatistic(Long productId) {
-        ProductStatistic existingProductStatistic = findProductStatistic(productId);
-        existingProductStatistic.setDislikeCount(existingProductStatistic.getDislikeCount() - 1);
-        existingProductStatistic.setStatisticDate(CustomDateTimeFormatter.getLocalDate());
-        existingProductStatistic.setLastModifiedDate(Instant.now().atZone(ZoneId.systemDefault()));
-        productStatisticRepository.save(existingProductStatistic);
-        log.info("Update product statistic with like success");
+        log.info(LogStatus.updateSuccess("product with dislike"));
     }
 
     /**
@@ -172,7 +128,7 @@ public class ProductStatisticService {
             productStatisticDto.setStatisticDate(productStatistic.getStatisticDate());
             productStatisticDtoList.add(productStatisticDto);
         }
-        log.info("Get list product statistic success");
+        log.info(LogStatus.selectAllSuccess("product statistic by today"));
         return productStatisticDtoList;
     }
 
@@ -203,7 +159,7 @@ public class ProductStatisticService {
             productStatisticDto.setStatisticDate(productStatistic.getStatisticDate());
             productStatisticDtoList.add(productStatisticDto);
         }
-        log.info("Get list product statistic by week success");
+        log.info(LogStatus.selectAllSuccess("product statistic by week"));
         return productStatisticDtoList;
     }
 
@@ -234,7 +190,7 @@ public class ProductStatisticService {
             productStatisticDto.setStatisticDate(productStatistic.getStatisticDate());
             productStatisticDtoList.add(productStatisticDto);
         }
-        log.info("Get list product statistic by week success");
+        log.info(LogStatus.selectAllSuccess("product statistic by month"));
         return productStatisticDtoList;
     }
 
@@ -265,7 +221,7 @@ public class ProductStatisticService {
             productStatisticDto.setStatisticDate(productStatistic.getStatisticDate());
             productStatisticDtoList.add(productStatisticDto);
         }
-        log.info("Get list product statistic by week success");
+        log.info(LogStatus.selectAllSuccess("product statistic by year"));
         return productStatisticDtoList;
     }
 }

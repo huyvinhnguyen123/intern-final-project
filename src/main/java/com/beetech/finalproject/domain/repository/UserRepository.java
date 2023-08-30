@@ -21,6 +21,7 @@ public interface UserRepository extends CrudRepository<User, String>, ListCrudRe
      */
     User findByLoginId(String loginId);
 
+
     /**
      * find by username
      * @param username - input username

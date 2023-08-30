@@ -1,8 +1,10 @@
 package com.beetech.finalproject.web.dtos.product;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class ProductDetailDto {
     private Long productId;
     private String sku;

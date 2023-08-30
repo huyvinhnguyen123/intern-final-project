@@ -5,6 +5,9 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class PasswordEncrypt {
+
+    private PasswordEncrypt() {}
+
     /**
      * encode password with BcryptPassword
      *

@@ -10,7 +10,7 @@ public class ImageValid implements ConstraintValidator<ValidImage, MultipartFile
     private static final String NULL_VALID_MESSAGE = "{Image.notNull}";
     private static final String EMPTY_VALID_MESSAGE = "{Image.notEmpty}";
 
-    private static final long MAX_SIZE_IN_BYTES = 2 * 1024 * 1024; // 2MB in bytes
+    private static final long MAX_SIZE_IN_BYTES = (long) 2 * 1024 * 1024; // 2MB in bytes
 
     @Override
     public boolean isValid(MultipartFile image, ConstraintValidatorContext constraintValidatorContext) {

@@ -44,14 +44,15 @@ public class ProductController {
 
     @PostMapping("/import")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ResponseDto<Object>> importData(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<ResponseDto<Object>> importData(@RequestParam("file") MultipartFile file,
+                                                          @RequestParam String type) {
         log.info("request importing products");
 
         try {
-            csvParserService.importProductCSVFile(file);
+            csvParserService.importCSVFile(file, type);
             return ResponseEntity.ok(ResponseDto.build().withMessage("OK"));
         } catch (ValidFileExtensionException | IOException e) {
-            return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST,"Failed to import products: " + e.getMessage());
+            return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST,"Failed to import file: " + e.getMessage());
         }
     }
 
@@ -131,7 +132,7 @@ public class ProductController {
             return ResponseEntity.ok(ResponseDto.build().withData(productResponses));
         } catch (AuthenticationException e) {
             log.error("Search products failed: " + e.getMessage());
-            return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST,"Failed to search product: " + e.getMessage());
+            return HandleRequestException.handleRequest(HttpStatus.BAD_REQUEST,"Failed to get products: " + e.getMessage());
         }
     }
 

@@ -3,10 +3,12 @@ package com.beetech.finalproject.web.dtos.category;
 import com.beetech.finalproject.validate.image.ValidImage;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.web.multipart.MultipartFile;
 
-@Data
+@Getter
+@Setter
 public class CategoryCreateDto {
     @NotNull(message = "{Category.categoryName.notNull}")
     @NotEmpty(message = "{Category.categoryName.notEmpty}")

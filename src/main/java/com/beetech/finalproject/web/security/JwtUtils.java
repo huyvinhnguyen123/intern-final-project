@@ -1,5 +1,6 @@
 package com.beetech.finalproject.web.security;
 
+import com.azure.security.keyvault.secrets.SecretClient;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -23,10 +24,16 @@ import java.util.function.Function;
  */
 @Component
 public class JwtUtils {
-    private final String SECRET_KEY = "Secret Key";
+    private SecretClient secretClient;
+    private static final String SECRET_KEY = "Secret Key";
     private static final String REDIS_KEY_PREFIX = "jwt:";
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+
+//    private String getSecret() {
+//        KeyVaultSecret retrievedSecret = secretClient.getSecret(SECRET_KEY);
+//        return retrievedSecret.getValue();
+//    }
 
     public String createToken(UserDetails userDetails) {
         String username = userDetails.getUsername();
@@ -73,7 +80,7 @@ public class JwtUtils {
 
         // check if the token exists in Redis
         Boolean exists = redisTemplate.hasKey(redisKey);
-        return !exists;
+        return Boolean.FALSE.equals(exists);
     }
 
     public Date extractExpiration(String token) {
@@ -93,7 +100,7 @@ public class JwtUtils {
         // check if the token exists in Redis
         Boolean exists = redisTemplate.hasKey(redisKey);
 
-        // If the token exists and it's not expired, consider it valid
-        return exists && !isTokenExpired(token) && username.equals(userDetails.getUsername());
+        // If the token exists, it's not expired, consider it valid
+        return Boolean.TRUE.equals(exists) && !isTokenExpired(token) && username.equals(userDetails.getUsername());
     }
 }

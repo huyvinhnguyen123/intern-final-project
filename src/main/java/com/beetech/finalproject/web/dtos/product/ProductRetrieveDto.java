@@ -1,13 +1,11 @@
 package com.beetech.finalproject.web.dtos.product;
 
 import com.beetech.finalproject.web.dtos.page.PageEntities;
-import lombok.Data;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.util.List;
-
-@Data
+@Getter
+@Setter
 public class ProductRetrieveDto {
     private Long productId;
     private String productName;

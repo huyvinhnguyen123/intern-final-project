@@ -1,5 +1,6 @@
 package com.beetech.finalproject.domain.service;
 
+import com.beetech.finalproject.common.LogStatus;
 import com.beetech.finalproject.domain.entities.District;
 import com.beetech.finalproject.domain.repository.DistrictRepository;
 import com.beetech.finalproject.web.dtos.district.DistrictDto;
@@ -24,8 +25,8 @@ public class DistrictService {
     public Iterable<DistrictDto> findAllDistrictsByCity(Long cityId) {
         List<District> districts = districtRepository.findAllDistrictByCityId(cityId).orElseThrow(
                 () -> {
-                    log.error("Not found this city");
-                    return new NullPointerException("Not found this city: " + cityId);
+                    log.error(LogStatus.selectOneFail("city"));
+                    return new NullPointerException(LogStatus.searchOneFail("city") + cityId);
                 }
         );
 
@@ -38,7 +39,7 @@ public class DistrictService {
             districtDtos.add(districtDto);
         }
 
-        log.info("Find all districts success!");
+        log.info(LogStatus.selectAllSuccess("districts"));
         return districtDtos;
     }
 }

@@ -4,9 +4,11 @@ import com.beetech.finalproject.validate.password.ValidPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class UserLoginDto {
     @NotNull(message = "{User.loginId.notNull}")
     @NotEmpty(message = "{User.loginId.notEmpty}")

@@ -69,7 +69,7 @@ public class CategoryController {
         log.info("request finding all categories");
 
         List<CategoryRetrieveDto> categoryRetrieveDtos = (List<CategoryRetrieveDto>)
-                categoryService.DisplayCategories();
+                categoryService.displayCategories();
 
         // add result inside response
         List<CategoryResponse> categoryResponses = new ArrayList<>();

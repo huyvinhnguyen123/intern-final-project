@@ -58,7 +58,7 @@ public class ResponseDto<T> {
      * @return ResponseDto
      */
     public static <T> ResponseDto<T> success(T data) {
-        ResponseDto<T> res = new ResponseDto<T>();
+        ResponseDto<T> res = new ResponseDto<>();
         res.httpStatus = HttpStatus.OK;
         res.status = res.httpStatus.value();
         res.data = data;
@@ -129,6 +129,6 @@ public class ResponseDto<T> {
      * @return ResponseEntity
      */
     public ResponseEntity<ResponseDto<T>> toResponseEntity() {
-        return new ResponseEntity<ResponseDto<T>>(this, this.httpStatus);
+        return new ResponseEntity<>(this, this.httpStatus);
     }
 }

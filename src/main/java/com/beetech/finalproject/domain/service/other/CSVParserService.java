@@ -1,11 +1,14 @@
 package com.beetech.finalproject.domain.service.other;
 
 import com.beetech.finalproject.common.DeleteFlag;
+import com.beetech.finalproject.common.LockFlag;
 import com.beetech.finalproject.domain.entities.*;
 import com.beetech.finalproject.domain.repository.*;
 import com.beetech.finalproject.domain.service.statistic.ProductStatisticService;
 import com.beetech.finalproject.exception.ValidFileExtensionException;
+import com.beetech.finalproject.utils.CustomDateTimeFormatter;
 import com.beetech.finalproject.web.dtos.statistic.ProductStatisticDto;
+import com.beetech.finalproject.web.security.PasswordEncrypt;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVWriter;
@@ -32,13 +35,14 @@ public class CSVParserService {
     private final ProductImageRepository productImageRepository;
     private final DetailImageRepository detailImageRepository;
     private final ProductStatisticService productStatisticService;
+    private final UserRepository userRepository;
 
     /**
      * check file extension (only accept csv file)
      *
      * @param file - input file
      */
-    public void importProductCSVFile(MultipartFile file) throws IOException {
+    public void importCSVFile(MultipartFile file, String type) throws IOException {
         String fileName = file.getOriginalFilename();
 
         // Check file extension
@@ -48,7 +52,14 @@ public class CSVParserService {
             throw new ValidFileExtensionException("Invalid file format. Only CSV files are allowed.");
         }
 
-        parseProduct(file.getInputStream());
+        if(type.equals("user")) {
+            parseUser(file.getInputStream());
+        }
+
+        if(type.equals("product")) {
+            parseProduct(file.getInputStream());
+        }
+
     }
 
     /**
@@ -183,6 +194,41 @@ public class CSVParserService {
                 log.info("Save detail image success");
 
                 productStatisticService.createProductStatistic(product.getProductId());
+            }
+        } catch (CsvValidationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Import user's file
+     *
+     * @param inputStream - input file
+     * @throws IOException - error
+     */
+    public void parseUser(InputStream inputStream) throws IOException {
+        try (CSVReader csvReader = new CSVReaderBuilder(new InputStreamReader(inputStream)).build()) {
+            csvReader.skip(1);
+            String[] line;
+            while ((line = csvReader.readNext()) != null) {
+                // Data in CSV file
+                String loginId = line[0];
+                String username = line[1];
+                String birthday = line[2];
+                String password = line[3];
+                String role = line[4];
+
+                // Create a new user instance and populate fields
+                User user = new User();
+                user.setLoginId(loginId);
+                user.setUsername(username);
+                user.setBirthDay(CustomDateTimeFormatter.dateOfBirthFormatter(birthday));
+                user.setPassword(PasswordEncrypt.bcryptPassword(password));
+                user.setLogFlag(LockFlag.NON_LOCK.getCode());
+                user.setDeleteFlag(DeleteFlag.NON_DELETE.getCode());
+                user.setRole(role);
+
+                userRepository.save(user);
             }
         } catch (CsvValidationException e) {
             throw new RuntimeException(e);

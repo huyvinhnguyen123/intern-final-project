@@ -3,11 +3,11 @@ package com.beetech.finalproject.domain.service;
 import com.beetech.finalproject.common.AccountException;
 import com.beetech.finalproject.common.DeleteFlag;
 import com.beetech.finalproject.common.LockFlag;
+import com.beetech.finalproject.common.LogStatus;
 import com.beetech.finalproject.domain.entities.User;
 import com.beetech.finalproject.domain.enums.Roles;
 import com.beetech.finalproject.domain.repository.UserRepository;
 import com.beetech.finalproject.utils.CustomDateTimeFormatter;
-import com.beetech.finalproject.web.controller.exception.HandleRequestException;
 import com.beetech.finalproject.web.dtos.user.UserChangePasswordDto;
 import com.beetech.finalproject.web.dtos.user.UserCreateDto;
 import com.beetech.finalproject.web.dtos.user.UserRetrieveDto;
@@ -40,9 +40,8 @@ public class UserService {
      * create user
      *
      * @param userCreateDto - input userCreateDTO properties
-     * @return - user
      */
-    public User createUser(UserCreateDto userCreateDto) {
+    public void createUser(UserCreateDto userCreateDto) {
         User user = new User();
         user.setLoginId(userCreateDto.getLoginId());
         user.setUsername(userCreateDto.getUsername());
@@ -58,11 +57,7 @@ public class UserService {
         }
 
         userRepository.save(user);
-        log.info("create user success");
-
-        log.info("Role: " + user.getRole());
-
-        return user;
+        log.info(LogStatus.createSuccess("user"));
     }
 
     /**
@@ -90,7 +85,7 @@ public class UserService {
      * @param userChangePasswordDto - input password
      * @param user                  - authentication
      */
-    public void changePassword(UserChangePasswordDto userChangePasswordDto, User user) {
+    public void changePassword(UserChangePasswordDto userChangePasswordDto, User user) throws RuntimeException {
         String oldPassword = userChangePasswordDto.getOldPassword();
 
         // Use BCrypt's built-in method to verify the old password
@@ -100,9 +95,9 @@ public class UserService {
             user.setPassword(encodedNewPassword);
             userRepository.save(user);
             log.info("Change password success");
+            log.info(LogStatus.updateSuccess("user"));
         } else {
             log.error("Old password is not correct");
-            throw new RuntimeException("Old password is not correct");
         }
     }
 

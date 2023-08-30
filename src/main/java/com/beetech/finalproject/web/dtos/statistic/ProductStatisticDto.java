@@ -1,8 +1,10 @@
 package com.beetech.finalproject.web.dtos.statistic;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class ProductStatisticDto {
     private Long productId;
     private String sku;

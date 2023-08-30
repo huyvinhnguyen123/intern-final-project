@@ -1,5 +1,6 @@
 package com.beetech.finalproject.domain.service;
 
+import com.beetech.finalproject.common.LogStatus;
 import com.beetech.finalproject.domain.entities.City;
 import com.beetech.finalproject.domain.repository.CityRepository;
 import com.beetech.finalproject.web.dtos.city.CityDto;
@@ -33,7 +34,7 @@ public class CityService {
             cityDtos.add(cityDto);
         }
 
-        log.info("Find all cities success!");
+        log.info(LogStatus.selectAllSuccess("cities"));
         return cityDtos;
     }
 }

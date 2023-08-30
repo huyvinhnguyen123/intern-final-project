@@ -19,7 +19,9 @@ import java.security.GeneralSecurityException;
 import java.util.Map;
 
 @RestControllerAdvice
-public class HandleRequestException {
+public class HandleRequestException extends Exception{
+
+    private HandleRequestException() {}
 
     /**
      * handle bad request for error system

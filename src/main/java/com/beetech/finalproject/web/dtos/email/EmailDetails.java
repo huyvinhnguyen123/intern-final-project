@@ -1,8 +1,10 @@
 package com.beetech.finalproject.web.dtos.email;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class EmailDetails {
     private String recipient;
     private String msgBody;

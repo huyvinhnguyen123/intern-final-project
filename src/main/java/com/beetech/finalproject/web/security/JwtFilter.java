@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -31,7 +32,7 @@ public class JwtFilter extends OncePerRequestFilter {
      * @throws IOException - error
      */
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull FilterChain filterChain) throws ServletException, IOException {
         // declare token header
         // the "Authorization" header is used by default to send authentication credentials
         // such as a JWT token or a Basic Authentication header,
@@ -62,7 +63,7 @@ public class JwtFilter extends OncePerRequestFilter {
             // find email in database
             User user = userRepository.findByLoginId(loginId);
             // validate token
-            if(jwtUtils.validateToken(token, user)) {
+            if(Boolean.TRUE.equals(jwtUtils.validateToken(token, user))) {
                 // set object to authenticate
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

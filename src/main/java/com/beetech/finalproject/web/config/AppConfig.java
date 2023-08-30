@@ -30,6 +30,7 @@ public class AppConfig implements WebMvcConfigurer {
         return messageSource;
     }
 
+    @Override
     @Bean
     public LocalValidatorFactoryBean getValidator() {
         LocalValidatorFactoryBean bean =  new LocalValidatorFactoryBean();
@@ -44,16 +45,16 @@ public class AppConfig implements WebMvcConfigurer {
 //----------------------------------------------------------------------------------------------------------------------
     // Redis config
     @Value("${redis.host}")
-    private String REDIS_HOST_NAME;
+    private String redisHostName;
 
     @Value("${redis.port}")
-    private int REDIS_PORT;
+    private int redisPort;
 
     @Bean
     public JedisConnectionFactory jedisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
-        config.setHostName(REDIS_HOST_NAME); // Replace with your Redis server hostname or IP
-        config.setPort(REDIS_PORT); // Replace with your Redis server port
+        config.setHostName(redisHostName); // Replace with your Redis server hostname or IP
+        config.setPort(redisPort); // Replace with your Redis server port
 
         return new JedisConnectionFactory(config);
     }

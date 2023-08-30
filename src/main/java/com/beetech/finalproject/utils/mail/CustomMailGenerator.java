@@ -2,10 +2,11 @@ package com.beetech.finalproject.utils.mail;
 
 
 public class CustomMailGenerator {
+    private CustomMailGenerator() {}
     private static final String EMAIL = "mailto:atifarlunar.official@gmail.com";
     private static final String TARGET="_blank";
 
-    public static final String resetPasswordMessage(String otp) {
+    public static String resetPasswordMessage(String otp) {
         return  "<html><body>"
                 + "<p><strong>Dear User</strong></p>"
                 + "<p>A request has been received to change the password for your BlindSight account. </p>"
@@ -18,7 +19,7 @@ public class CustomMailGenerator {
                 + "</body></html>";
     }
 
-    public static final String productWhistListMessage(String sku, String productName, Double price) {
+    public static String productWhistListMessage(String sku, String productName, Double price) {
         return  "<!DOCTYPE html>\n" +
                 "<html>\n" +
                 "<head>\n" +
