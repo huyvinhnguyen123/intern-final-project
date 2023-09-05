@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .container {
+            border: 1px solid #e6e6e6;
+            padding: 20px;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        strong {
+            color: #ff6600;
+        }
+
+        .change-details {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border: 1px solid #e6e6e6;
+            margin-top: 10px;
+        }
+
+        .footer {
+            margin-top: 20px;
+            color: #777;
+        }
+    </style>
+    <title> Email Notification </title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+<div class="container">
+    <h2>Dear User,</h2>
+    <p>We have important news about the product you liked. There have been changes in the product:</p>
+    <div class="change-details">
+        <p>
+            <strong>New sku:</strong> <span th:text = "${sku}"></span>
+        </p>
+        <p>
+            <strong>New name:</strong> <span th:text = "${productName}"></span>
+        </p>
+        <p>
+            <strong>New price:</strong> <span th:text = "${price}"></span>
+        </p>
+    </div>
+    <p>If you have any questions, please don't hesitate to contact us at: <a href="mailto:atifarlunar.official@gmail.com">atifarlunar.official@gmail.com</a></p>
+    <p>Thank you!</p>
+    <p class="footer">Best Regards, <br><strong>The BlindSight Team</strong></p>
+</div>
+</body>
+</html>

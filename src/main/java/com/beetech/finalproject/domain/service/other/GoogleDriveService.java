@@ -15,7 +15,10 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,13 +30,14 @@ import java.security.GeneralSecurityException;
 import java.util.Collections;
 
 @Service
+@Slf4j
 public class GoogleDriveService {
     @Value("${drive.application.name}")
-    private String APPLICATION_NAME;
+    private String applicationName;
     @Value("${drive.credentials.file}")
-    private String CREDENTIALS_FILE_PATH;
+    private String credentialsFilePath;
     @Value("${drive.token.directory}")
-    private java.io.File TOKENS_DIRECTORY_PATH;
+    private java.io.File tokenDirectoryPath;
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
 
     /**
@@ -48,13 +52,13 @@ public class GoogleDriveService {
         GoogleClientSecrets clientSecrets = loadClientSecrets();
 
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(httpTransport, JSON_FACTORY, clientSecrets, Collections.singletonList(DriveScopes.DRIVE))
-                .setDataStoreFactory(new FileDataStoreFactory(TOKENS_DIRECTORY_PATH))
+                .setDataStoreFactory(new FileDataStoreFactory(tokenDirectoryPath))
                 .build();
         LocalServerReceiver receiver = new LocalServerReceiver.Builder().setHost("localhost").setPort(2223).build();
         Credential credential = new AuthorizationCodeInstalledApp(flow, receiver).authorize("atifarlunar.official@gmail.com");
 
         return new Drive.Builder(httpTransport, JSON_FACTORY, credential)
-                .setApplicationName(APPLICATION_NAME)
+                .setApplicationName(applicationName)
                 .build();
     }
 
@@ -65,7 +69,7 @@ public class GoogleDriveService {
      * @throws IOException - error
      */
     private GoogleClientSecrets loadClientSecrets() throws IOException {
-        InputStream in = GoogleDriveService.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
+        InputStream in = GoogleDriveService.class.getResourceAsStream(credentialsFilePath);
         assert in != null;
         return GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
     }
@@ -78,6 +82,7 @@ public class GoogleDriveService {
      * @throws IOException - error
      * @throws GeneralSecurityException -error
      */
+    @Async
     public File uploadToDrive(MultipartFile imageFile, String folderId) throws NullPointerException, IOException, GeneralSecurityException {
         Drive driveService = getDriveService();
 
@@ -134,6 +139,7 @@ public class GoogleDriveService {
      * @throws IOException - error
      * @throws GeneralSecurityException - error
      */
+    @Async
     public byte[] downloadFileContent(String fileId) throws IOException, GeneralSecurityException {
         Drive driveService = getDriveService();
 
@@ -151,18 +157,19 @@ public class GoogleDriveService {
      * @throws IOException - error
      * @throws GeneralSecurityException - error
      */
+    @Async
     public void deleteImageFromDrive(String fileId) throws IOException, GeneralSecurityException {
         Drive driveService = getDriveService();
 
         try {
             if(driveService.files().get(fileId).isEmpty()) {
-                System.out.println("File not found on drive.");
+                log.info("File not found on drive.");
             } else {
                 driveService.files().delete(fileId).execute();
-                System.out.println("File deleted successfully.");
+                log.info("File deleted successfully.");
             }
         } catch (IOException e) {
-            System.err.println("An error occurred while deleting the file: " + e.getMessage());
+            log.error("An error occurred while deleting the file: " + e.getMessage());
         }
     }
 }

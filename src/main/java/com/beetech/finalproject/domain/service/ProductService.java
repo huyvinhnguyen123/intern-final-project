@@ -8,7 +8,6 @@ import com.beetech.finalproject.domain.repository.*;
 import com.beetech.finalproject.domain.service.other.EmailDetailsService;
 import com.beetech.finalproject.domain.service.other.GoogleDriveService;
 import com.beetech.finalproject.domain.service.statistic.ProductStatisticService;
-import com.beetech.finalproject.utils.mail.CustomMailGenerator;
 import com.beetech.finalproject.web.dtos.email.EmailDetails;
 import com.beetech.finalproject.web.dtos.image.ImageRetrieveDto;
 import com.beetech.finalproject.web.dtos.page.PageEntities;
@@ -56,8 +55,7 @@ public class ProductService {
         EmailDetails emailDetails = new EmailDetails();
         emailDetails.setRecipients(emails);
         emailDetails.setSubject("You have 1 notification about product's information");
-        emailDetails.setMsgBody(CustomMailGenerator.productWhistListMessage(sku, productName, price));
-        emailDetailService.sendMultipleMailWithFormHTML(emailDetails);
+        emailDetailService.sendMultipleMailWithFormHTML(emailDetails, sku, productName, price);
     }
 
     /**
@@ -324,29 +322,26 @@ public class ProductService {
 
         List<Category> categoryForProductList = getListCategoryForProduct(productCreateDto);
         existingProduct.setCategories(categoryForProductList);
-        productRepository.save(existingProduct);
-        log.info(LogStatus.updateSuccess("product"));
 
         updateProductImageAndImageForProduct(existingProduct, productCreateDto);
         log.info(LogStatus.updateSuccess("product"));
 
-        for(ProductUser productUser: productUserRepository.findAll()) {
-            if(productUser.getProduct().equals(existingProduct)) {
-                User userLikeProduct = productUser.getUser();
-                ProductUser existingProductUser = productUserRepository.findByProductAndUser(existingProduct, userLikeProduct);
+        Iterable<ProductUser> productUsers = productUserRepository.findAllByProduct(existingProduct);
+        for(ProductUser productUser: productUsers) {
+            User userLikeProduct = productUser.getUser();
+            ProductUser existingProductUser = productUserRepository.findByProductAndUser(existingProduct, userLikeProduct);
 
-                if(existingProductUser.getIsLike().equals(true)) {
-                    List<String> emails = new ArrayList<>();
-                    emails.add(userLikeProduct.getLoginId());
+            if(existingProductUser.getIsLike().equals(true)) {
+                List<String> emails = new ArrayList<>();
+                emails.add(userLikeProduct.getLoginId());
 
-                    String[] emailArray = emails.toArray(new String[0]);
-                    sendProductUpdateMail(
-                            emailArray,
-                            existingProduct.getSku(),
-                            existingProduct.getProductName(),
-                            existingProduct.getPrice()
-                    );
-                }
+                String[] emailArray = emails.toArray(new String[0]);
+                sendProductUpdateMail(
+                        emailArray,
+                        existingProduct.getSku(),
+                        existingProduct.getProductName(),
+                        existingProduct.getPrice()
+                );
             }
         }
         log.info("Update product & send mail for updating product success");
@@ -387,28 +382,11 @@ public class ProductService {
         }
     }
 
-    private void deleteExistingImage(ProductImage productImage) throws GeneralSecurityException, IOException {
-        googleDriveService.deleteImageFromDrive(productImage.getImageForProduct().getPath());
-        log.info(LogStatus.deleteSuccess("file"));
-        for(ImageForProduct imageForProduct: imageForProductRepository.findAll()) {
-            if(imageForProduct.equals(productImage.getImageForProduct())) {
-                for(DetailImage detailImage: detailImageRepository.findAll()) {
-                    if(detailImage.getImageForProduct().equals(imageForProduct)) {
-                        googleDriveService.deleteImageFromDrive(detailImage.getPath());
-                        detailImageRepository.deleteById(detailImage.getDetailImageId());
-                        log.info(LogStatus.deleteSuccess("detail image"));
-                    }
-                }
-            }
-        }
-    }
-
     private void updateProductImageAndImageForProduct(Product existingProduct, ProductCreateDto productCreateDto) throws GeneralSecurityException, IOException {
         for(ProductImage productImage: productImageRepository.findAll()) {
             if(!productImage.getProduct().equals(existingProduct)) {
                 updateNewImage(existingProduct, productCreateDto);
             } else {
-                deleteExistingImage(productImage);
                 ImageForProduct imageForProduct = productImage.getImageForProduct();
                 imageForProduct.setPath(googleDriveService.uploadImageAndGetId(productCreateDto.getThumbnailImage(), productPath));
                 imageForProduct.setName(productCreateDto.getThumbnailImage().getOriginalFilename());
